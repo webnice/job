@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"gopkg.in/webnice/job.v1/event"
+	"gopkg.in/webnice/job.v1/types"
 )
 
 // Горутина обработки событий
@@ -108,47 +109,51 @@ func (jbo *impl) eventRestartProcess(evt *event.Event) {
 			if prc.Task.ID != evt.TargetID {
 				continue
 			}
-			// Таймаут перезапуска процесса
-			if prc.Task.State.Conf.RestartTimeout > 0 {
-				go func() {
-					tmr := time.NewTimer(prc.Task.State.Conf.RestartTimeout)
-					defer tmr.Stop()
-					<-tmr.C
-					jbo.Err = jbo.doTask(prc.Task.ID)
-				}()
-			} else {
-				jbo.Err = jbo.doTask(prc.Task.ID)
-			}
+			// Перезапуск процесса с таймаутом
+			go jbo.doTaskWithTimeout(prc.Task, prc.Task.State.Conf.RestartTimeout)
 		case prc.Worker != nil:
 			if prc.Worker.ID != evt.TargetID {
 				continue
 			}
-			// Таймаут перезапуска процесса
-			if prc.Worker.State.Conf.RestartTimeout > 0 {
-				go func() {
-					tmr := time.NewTimer(prc.Worker.State.Conf.RestartTimeout)
-					defer tmr.Stop()
-					<-tmr.C
-					jbo.Err = jbo.doTask(prc.Worker.ID)
-				}()
-			} else {
-				jbo.Err = jbo.doTask(prc.Worker.ID)
-			}
+			// Перезапуск процесса с таймаутом
+			go jbo.doTaskWithTimeout(prc.Worker, prc.Worker.State.Conf.RestartTimeout)
 		case prc.ForkWorker != nil:
 			if prc.ForkWorker.ID != evt.TargetID {
 				continue
 			}
-			if prc.ForkWorker.State.Conf.RestartTimeout > 0 {
-				go func() {
-					tmr := time.NewTimer(prc.ForkWorker.State.Conf.RestartTimeout)
-					defer tmr.Stop()
-					<-tmr.C
-					jbo.Err = jbo.doTask(prc.ForkWorker.ID)
-				}()
-			} else {
-				jbo.Err = jbo.doTask(prc.ForkWorker.ID)
-			}
+			// Перезапуск процесса с таймаутом
+			go jbo.doTaskWithTimeout(prc.ForkWorker, prc.ForkWorker.State.Conf.RestartTimeout)
 		}
+	}
+}
+
+// Перезапуск процесса с таймаутом
+func (jbo *impl) doTaskWithTimeout(proc interface{}, tm time.Duration) {
+	var err error
+	var tmr *time.Timer
+	var id string
+
+	if tm > 0 {
+		tmr = time.NewTimer(tm)
+		defer tmr.Stop()
+		<-tmr.C
+	}
+	switch proc.(type) {
+	case *types.Task:
+		if item, ok := proc.(*types.Task); ok {
+			id, err = item.ID, jbo.runTask(item)
+		}
+	case *types.Worker:
+		if item, ok := proc.(*types.Worker); ok {
+			id, err = item.ID, jbo.runWorker(item)
+		}
+	case *types.ForkWorker:
+		if item, ok := proc.(*types.ForkWorker); ok {
+			id, err = item.ID, jbo.runForkWorker(item)
+		}
+	}
+	if err != nil {
+		jbo.Event <- &event.Event{Act: event.EOnError, SourceID: id, Err: err}
 	}
 }
 
