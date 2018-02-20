@@ -1,7 +1,7 @@
 package types // import "gopkg.in/webnice/job.v1/types"
 
 //import "gopkg.in/webnice/debug.v1"
-import log "gopkg.in/webnice/log.v2"
+//import log "gopkg.in/webnice/log.v2"
 import (
 	"context"
 	"runtime"
@@ -29,15 +29,10 @@ func NewWorker() interface{} {
 	jbo.Ctx, jbo.Cancel = context.WithCancel(context.Background())
 	jbo.Self = nil
 	runtime.SetFinalizer(jbo, DestroyWorker)
-
-	log.Debug("New worker object")
-
 	return jbo
 }
 
 // DestroyWorker Деструктор объектов Worker
 func DestroyWorker(jbo *Worker) {
-
-	log.Debug("Destroy worker object")
-
+	//log.Debug("Destroy worker object")
 }
