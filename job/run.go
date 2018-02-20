@@ -102,7 +102,14 @@ func (jbo *impl) runProc(ctx context.Context, pri types.BaseInterface, pith *typ
 		if pith.State.Conf.CancelTimeout > 0 {
 			// Таймаут ожидания завершения процесса после выполнения функции Cancel()
 			// После этого ожидания, отправляем в канал сигнал, как буд-то процесс завершился
-			go func() { <-time.After(pith.State.Conf.CancelTimeout); safeChannelSend(pex) }()
+			go func() {
+				if pith.State.Conf.CancelTimeout > 0 {
+					tmr := time.NewTimer(pith.State.Conf.CancelTimeout)
+					defer tmr.Stop()
+					<-tmr.C
+				}
+				safeChannelSend(pex)
+			}()
 		}
 	}
 	// Ожидание завершения процесса

@@ -109,25 +109,45 @@ func (jbo *impl) eventRestartProcess(evt *event.Event) {
 				continue
 			}
 			// Таймаут перезапуска процесса
-			<-time.After(prc.Task.State.Conf.RestartTimeout)
-			// Запуск процесса
-			_ = jbo.doTask(prc.Task.ID)
+			if prc.Task.State.Conf.RestartTimeout > 0 {
+				go func() {
+					tmr := time.NewTimer(prc.Task.State.Conf.RestartTimeout)
+					defer tmr.Stop()
+					<-tmr.C
+					jbo.Err = jbo.doTask(prc.Task.ID)
+				}()
+			} else {
+				jbo.Err = jbo.doTask(prc.Task.ID)
+			}
 		case prc.Worker != nil:
 			if prc.Worker.ID != evt.TargetID {
 				continue
 			}
 			// Таймаут перезапуска процесса
-			<-time.After(prc.Worker.State.Conf.RestartTimeout)
-			// Запуск процесса
-			_ = jbo.doTask(prc.Worker.ID)
+			if prc.Worker.State.Conf.RestartTimeout > 0 {
+				go func() {
+					tmr := time.NewTimer(prc.Worker.State.Conf.RestartTimeout)
+					defer tmr.Stop()
+					<-tmr.C
+					jbo.Err = jbo.doTask(prc.Worker.ID)
+				}()
+			} else {
+				jbo.Err = jbo.doTask(prc.Worker.ID)
+			}
 		case prc.ForkWorker != nil:
 			if prc.ForkWorker.ID != evt.TargetID {
 				continue
 			}
-			// Таймаут перезапуска процесса
-			<-time.After(prc.ForkWorker.State.Conf.RestartTimeout)
-			// Запуск процесса
-			_ = jbo.doTask(prc.ForkWorker.ID)
+			if prc.ForkWorker.State.Conf.RestartTimeout > 0 {
+				go func() {
+					tmr := time.NewTimer(prc.ForkWorker.State.Conf.RestartTimeout)
+					defer tmr.Stop()
+					<-tmr.C
+					jbo.Err = jbo.doTask(prc.ForkWorker.ID)
+				}()
+			} else {
+				jbo.Err = jbo.doTask(prc.ForkWorker.ID)
+			}
 		}
 	}
 }
