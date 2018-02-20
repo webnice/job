@@ -1,0 +1,4 @@
+gopkg.in/webnice/job.v1/event
+gopkg.in/webnice/job.v1/pool
+gopkg.in/webnice/job.v1/types
+gopkg.in/webnice/job.v1/job
