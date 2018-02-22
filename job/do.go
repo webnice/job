@@ -107,6 +107,45 @@ func (jbo *impl) Do() (err error) {
 	return
 }
 
+// Start Отправка команды запуска процесса
+func (jbo *impl) Start(id string) (err error) {
+	var elm *list.Element
+	var prc *Process
+	var ok, found bool
+
+	for elm = jbo.ProcessList.Front(); elm != nil; elm = elm.Next() {
+		if prc, ok = elm.Value.(*Process); !ok {
+			continue
+		}
+		switch {
+		case prc.Task != nil:
+			if prc.Task.ID != id {
+				continue
+			}
+			found = true
+			err = jbo.runTask(prc.Task)
+		case prc.Worker != nil:
+			if prc.Worker.ID != id {
+				continue
+			}
+			found = true
+			err = jbo.runWorker(prc.Worker)
+		case prc.ForkWorker != nil:
+			if prc.ForkWorker.ID != id {
+				continue
+			}
+			found = true
+			err = jbo.runForkWorker(prc.ForkWorker)
+		}
+	}
+	if !found {
+		err = ErrorProcessNotFound()
+		return
+	}
+
+	return
+}
+
 // Запуск всех forkworker процессов
 // Если id="" - Запускаются все процессы с флагом Autostart=true
 // Если id указан, запускается процесс с указанным id

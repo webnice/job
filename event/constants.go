@@ -24,4 +24,7 @@ const (
 
 	// EProcessStoped Событие остановки процесса
 	EProcessStoped = Operation(`Process has stopped successfully`)
+
+	// EStartProcess Событие запуска процесса
+	EStartProcess = Operation(`Start process`)
 )

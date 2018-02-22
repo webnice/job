@@ -25,4 +25,7 @@ func TestErrors(t *testing.T) {
 	if ErrorProcessAlreadyRunning() != errProcessAlreadyRunning {
 		t.Fatalf("The error constants are not correctly defined")
 	}
+	if ErrorProcessNotFound() != errProcessNotFound {
+		t.Fatalf("The error constants are not correctly defined")
+	}
 }

@@ -11,6 +11,7 @@ var (
 	errDeadlineExceeded           = fmt.Errorf("Deadline exceeded")
 	errProcessesAreStillRunning   = fmt.Errorf("One or more processes are still running")
 	errProcessAlreadyRunning      = fmt.Errorf("Process already running")
+	errProcessNotFound            = fmt.Errorf("Process not found")
 )
 
 // ErrorNotImplemented Not implemented
@@ -30,3 +31,6 @@ func ErrorProcessesAreStillRunning() error { return errProcessesAreStillRunning 
 
 // ErrorProcessAlreadyRunning Process already running
 func ErrorProcessAlreadyRunning() error { return errProcessAlreadyRunning }
+
+// ErrorProcessNotFound Process not found
+func ErrorProcessNotFound() error { return errProcessNotFound }
