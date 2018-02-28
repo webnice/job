@@ -9,6 +9,9 @@
 #### Description
 
 
+#### Requirements
+
+	Golang 1.8 or later
 
 #### Dependencies
 
