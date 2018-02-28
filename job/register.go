@@ -5,6 +5,8 @@ package job // import "gopkg.in/webnice/job.v1/job"
 import (
 	"container/list"
 	"strings"
+
+	"gopkg.in/webnice/job.v1/types"
 )
 
 // RegisterTask Регистрация простой управляемой задачи
@@ -13,7 +15,7 @@ func (jbo *impl) RegisterTask(obj Task) {
 	jb.Self = obj
 	jb.ID = getStructName(obj)
 	jb.State.IsRun.Store(false)
-	jbo.ProcessList.PushBack(&Process{Task: jb})
+	jbo.ProcessList.PushBack(&Process{P: jb})
 }
 
 // RegisterWorker Регистрация управляемого работника
@@ -22,7 +24,7 @@ func (jbo *impl) RegisterWorker(obj Worker) {
 	wk.Self = obj
 	wk.ID = getStructName(obj)
 	wk.State.IsRun.Store(false)
-	jbo.ProcessList.PushBack(&Process{Worker: wk})
+	jbo.ProcessList.PushBack(&Process{P: wk})
 }
 
 // RegisterForkWorker Регистрация управляемого работника
@@ -31,7 +33,7 @@ func (jbo *impl) RegisterForkWorker(obj ForkWorker) {
 	fwk.Self = obj
 	fwk.ID = getStructName(obj)
 	fwk.State.IsRun.Store(false)
-	jbo.ProcessList.PushBack(&Process{ForkWorker: fwk})
+	jbo.ProcessList.PushBack(&Process{P: fwk})
 }
 
 // Unregister Функция удаляет из реестра процессов процесс с указанным ID
@@ -39,20 +41,20 @@ func (jbo *impl) RegisterForkWorker(obj ForkWorker) {
 func (jbo *impl) Unregister(id string) (err error) {
 	var elm, del *list.Element
 	var prc *Process
-	var ok, found, isRun, t, w, f bool
+	var ok, found, isRun bool
 	var elmID string
 
 	for elm = jbo.ProcessList.Front(); elm != nil; elm = elm.Next() {
 		if prc, ok = elm.Value.(*Process); !ok {
 			continue
 		}
-		switch {
-		case prc.Task != nil:
-			elmID, isRun, t = prc.Task.ID, prc.Task.State.IsRun.Load().(bool), true
-		case prc.Worker != nil:
-			elmID, isRun, w = prc.Worker.ID, prc.Worker.State.IsRun.Load().(bool), true
-		case prc.ForkWorker != nil:
-			elmID, isRun, f = prc.ForkWorker.ID, prc.ForkWorker.State.IsRun.Load().(bool), true
+		switch wrk := prc.P.(type) {
+		case *types.Task:
+			elmID, isRun = wrk.ID, wrk.State.IsRun.Load().(bool)
+		case *types.Worker:
+			elmID, isRun = wrk.ID, wrk.State.IsRun.Load().(bool)
+		case *types.ForkWorker:
+			elmID, isRun = wrk.ID, wrk.State.IsRun.Load().(bool)
 		}
 		if strings.Index(elmID, id) == 0 {
 			del, found = elm, true
@@ -69,18 +71,16 @@ func (jbo *impl) Unregister(id string) (err error) {
 	}
 	_ = jbo.ProcessList.Remove(del)
 	// Возврат объекта в пул
-	if prc, ok = del.Value.(*Process); ok {
-		switch {
-		case t:
-			jbo.Pool.TaskPut(prc.Task)
-			prc.Task = nil
-		case w:
-			jbo.Pool.WorkerPut(prc.Worker)
-			prc.Worker = nil
-		case f:
-			jbo.Pool.ForkWorkerPut(prc.ForkWorker)
-			prc.ForkWorker = nil
+	if prc, ok = del.Value.(*Process); ok && prc != nil {
+		switch wrk := prc.P.(type) {
+		case *types.Task:
+			jbo.Pool.TaskPut(wrk)
+		case *types.Worker:
+			jbo.Pool.WorkerPut(wrk)
+		case *types.ForkWorker:
+			jbo.Pool.ForkWorkerPut(wrk)
 		}
+		prc.P = nil
 	}
 
 	return

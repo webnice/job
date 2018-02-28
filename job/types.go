@@ -11,7 +11,6 @@ import (
 
 	"gopkg.in/webnice/job.v1/event"
 	"gopkg.in/webnice/job.v1/pool"
-	"gopkg.in/webnice/job.v1/types"
 )
 
 const (
@@ -105,9 +104,8 @@ type impl struct {
 
 // Process Ссылка на процесс
 type Process struct {
-	Task       *types.Task
-	Worker     *types.Worker
-	ForkWorker *types.ForkWorker
+	// P Присваиваются: *types.Task, *types.Worker, *types.ForkWorker
+	P interface{}
 }
 
 // OnErrorFunc Функция получения ошибок

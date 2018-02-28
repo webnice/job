@@ -51,21 +51,21 @@ func (jbo *impl) eventCancel() {
 
 	jbo.Exit.Store(true)
 	for elm = jbo.ProcessList.Front(); elm != nil; elm = elm.Next() {
-		if prc, ok = elm.Value.(*Process); !ok {
+		if prc, ok = elm.Value.(*Process); !ok || prc == nil {
 			continue
 		}
-		switch {
-		case prc.Task != nil:
-			if prc.Task.State.IsRun.Load().(bool) {
-				prc.Task.Cancel()
+		switch wrk := prc.P.(type) {
+		case *types.Task:
+			if wrk.State.IsRun.Load().(bool) {
+				wrk.Cancel()
 			}
-		case prc.Worker != nil:
-			if prc.Worker.State.IsRun.Load().(bool) {
-				prc.Worker.Cancel()
+		case *types.Worker:
+			if wrk.State.IsRun.Load().(bool) {
+				wrk.Cancel()
 			}
-		case prc.ForkWorker != nil:
-			if prc.ForkWorker.State.IsRun.Load().(bool) {
-				prc.ForkWorker.Cancel()
+		case *types.ForkWorker:
+			if wrk.State.IsRun.Load().(bool) {
+				wrk.Cancel()
 			}
 		}
 	}
@@ -101,28 +101,28 @@ func (jbo *impl) eventRestartProcess(evt *event.Event) {
 		return
 	}
 	for elm = jbo.ProcessList.Front(); elm != nil; elm = elm.Next() {
-		if prc, ok = elm.Value.(*Process); !ok {
+		if prc, ok = elm.Value.(*Process); !ok || prc == nil {
 			continue
 		}
-		switch {
-		case prc.Task != nil:
-			if prc.Task.ID != evt.TargetID {
+		switch wrk := prc.P.(type) {
+		case *types.Task:
+			if wrk.ID != evt.TargetID {
 				continue
 			}
 			// Перезапуск процесса с таймаутом
-			go jbo.doTaskWithTimeout(prc.Task, prc.Task.State.Conf.RestartTimeout)
-		case prc.Worker != nil:
-			if prc.Worker.ID != evt.TargetID {
+			go jbo.doTaskWithTimeout(wrk, wrk.State.Conf.RestartTimeout)
+		case *types.Worker:
+			if wrk.ID != evt.TargetID {
 				continue
 			}
 			// Перезапуск процесса с таймаутом
-			go jbo.doTaskWithTimeout(prc.Worker, prc.Worker.State.Conf.RestartTimeout)
-		case prc.ForkWorker != nil:
-			if prc.ForkWorker.ID != evt.TargetID {
+			go jbo.doTaskWithTimeout(wrk, wrk.State.Conf.RestartTimeout)
+		case *types.ForkWorker:
+			if wrk.ID != evt.TargetID {
 				continue
 			}
 			// Перезапуск процесса с таймаутом
-			go jbo.doTaskWithTimeout(prc.ForkWorker, prc.ForkWorker.State.Conf.RestartTimeout)
+			go jbo.doTaskWithTimeout(wrk, wrk.State.Conf.RestartTimeout)
 		}
 	}
 }

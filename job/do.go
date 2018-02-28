@@ -17,24 +17,24 @@ func (jbo *impl) getConfiguration() (err error) {
 	var prc *Process
 
 	for elm = jbo.ProcessList.Front(); elm != nil; elm = elm.Next() {
-		if prc, ok = elm.Value.(*Process); !ok {
+		if prc, ok = elm.Value.(*Process); !ok || prc == nil {
 			continue
 		}
-		switch {
-		case prc.Task != nil:
-			prc.Task.State.Conf = prc.Task.Self.Info(prc.Task.ID)
-			if prc.Task.State.Conf == nil {
-				prc.Task.State.Conf = types.DefaultConfiguration()
+		switch wrk := prc.P.(type) {
+		case *types.Task:
+			wrk.State.Conf = wrk.Self.Info(wrk.ID)
+			if wrk.State.Conf == nil {
+				wrk.State.Conf = types.DefaultConfiguration()
 			}
-		case prc.Worker != nil:
-			prc.Worker.State.Conf = prc.Worker.Self.Info(prc.Worker.ID)
-			if prc.Worker.State.Conf == nil {
-				prc.Worker.State.Conf = types.DefaultConfiguration()
+		case *types.Worker:
+			wrk.State.Conf = wrk.Self.Info(wrk.ID)
+			if wrk.State.Conf == nil {
+				wrk.State.Conf = types.DefaultConfiguration()
 			}
-		case prc.ForkWorker != nil:
-			prc.ForkWorker.State.Conf = prc.ForkWorker.Self.Info(prc.ForkWorker.ID)
-			if prc.ForkWorker.State.Conf == nil {
-				prc.ForkWorker.State.Conf = types.DefaultConfiguration()
+		case *types.ForkWorker:
+			wrk.State.Conf = wrk.Self.Info(wrk.ID)
+			if wrk.State.Conf == nil {
+				wrk.State.Conf = types.DefaultConfiguration()
 			}
 		}
 	}
@@ -56,16 +56,16 @@ func (jbo *impl) priority() {
 	var n int
 
 	for elm = jbo.ProcessList.Front(); elm != nil; elm = elm.Next() {
-		if prc, ok = elm.Value.(*Process); !ok {
+		if prc, ok = elm.Value.(*Process); !ok || prc == nil {
 			continue
 		}
-		switch {
-		case prc.Task != nil:
-			pst = append(pst, &plist{ID: prc.Task.ID, Start: prc.Task.State.Conf.PriorityStart, Stop: prc.Task.State.Conf.PriorityStop})
-		case prc.Worker != nil:
-			pst = append(pst, &plist{ID: prc.Worker.ID, Start: prc.Worker.State.Conf.PriorityStart, Stop: prc.Worker.State.Conf.PriorityStop})
-		case prc.ForkWorker != nil:
-			pst = append(pst, &plist{ID: prc.ForkWorker.ID, Start: prc.ForkWorker.State.Conf.PriorityStart, Stop: prc.ForkWorker.State.Conf.PriorityStop})
+		switch wrk := prc.P.(type) {
+		case *types.Task:
+			pst = append(pst, &plist{ID: wrk.ID, Start: wrk.State.Conf.PriorityStart, Stop: wrk.State.Conf.PriorityStop})
+		case *types.Worker:
+			pst = append(pst, &plist{ID: wrk.ID, Start: wrk.State.Conf.PriorityStart, Stop: wrk.State.Conf.PriorityStop})
+		case *types.ForkWorker:
+			pst = append(pst, &plist{ID: wrk.ID, Start: wrk.State.Conf.PriorityStart, Stop: wrk.State.Conf.PriorityStop})
 		}
 	}
 	// В порядке старта
@@ -114,28 +114,25 @@ func (jbo *impl) Start(id string) (err error) {
 	var ok, found bool
 
 	for elm = jbo.ProcessList.Front(); elm != nil; elm = elm.Next() {
-		if prc, ok = elm.Value.(*Process); !ok {
+		if prc, ok = elm.Value.(*Process); !ok || prc == nil {
 			continue
 		}
-		switch {
-		case prc.Task != nil:
-			if prc.Task.ID != id {
+		switch wrk := prc.P.(type) {
+		case *types.Task:
+			if wrk.ID != id {
 				continue
 			}
-			found = true
-			err = jbo.runTask(prc.Task)
-		case prc.Worker != nil:
-			if prc.Worker.ID != id {
+			err, found = jbo.runTask(wrk), true
+		case *types.Worker:
+			if wrk.ID != id {
 				continue
 			}
-			found = true
-			err = jbo.runWorker(prc.Worker)
-		case prc.ForkWorker != nil:
-			if prc.ForkWorker.ID != id {
+			err, found = jbo.runWorker(wrk), true
+		case *types.ForkWorker:
+			if wrk.ID != id {
 				continue
 			}
-			found = true
-			err = jbo.runForkWorker(prc.ForkWorker)
+			err, found = jbo.runForkWorker(wrk), true
 		}
 	}
 	if !found {
@@ -157,20 +154,21 @@ func (jbo *impl) doFrokWorker(id string) (err error) {
 
 	for n = range jbo.StartPriority {
 		for elm = jbo.ProcessList.Front(); elm != nil; elm = elm.Next() {
-			if prc, ok = elm.Value.(*Process); !ok {
+			if prc, ok = elm.Value.(*Process); !ok || prc == nil {
 				continue
 			}
-			if prc.ForkWorker == nil {
-				continue
-			}
-			if id != "" && prc.ForkWorker.ID != id {
-				continue
-			} else if !prc.ForkWorker.State.Conf.Autostart ||
-				prc.ForkWorker.ID != jbo.StartPriority[n] {
-				continue
-			}
-			if err = jbo.runForkWorker(prc.ForkWorker); err != nil {
-				return
+			switch wrk := prc.P.(type) {
+			case *types.ForkWorker:
+				if id != "" && wrk.ID != id {
+					continue
+				} else if !wrk.State.Conf.Autostart ||
+					wrk.ID != jbo.StartPriority[n] {
+					continue
+				}
+				if err = jbo.runForkWorker(wrk); err != nil {
+					return
+				}
+
 			}
 		}
 	}
@@ -189,20 +187,20 @@ func (jbo *impl) doWorker(id string) (err error) {
 
 	for n = range jbo.StartPriority {
 		for elm = jbo.ProcessList.Front(); elm != nil; elm = elm.Next() {
-			if prc, ok = elm.Value.(*Process); !ok {
+			if prc, ok = elm.Value.(*Process); !ok || prc == nil {
 				continue
 			}
-			if prc.Worker == nil {
-				continue
-			}
-			if id != "" && prc.Worker.ID != id {
-				continue
-			} else if !prc.Worker.State.Conf.Autostart ||
-				prc.Worker.ID != jbo.StartPriority[n] {
-				continue
-			}
-			if err = jbo.runWorker(prc.Worker); err != nil {
-				return
+			switch wrk := prc.P.(type) {
+			case *types.Worker:
+				if id != "" && wrk.ID != id {
+					continue
+				} else if !wrk.State.Conf.Autostart ||
+					wrk.ID != jbo.StartPriority[n] {
+					continue
+				}
+				if err = jbo.runWorker(wrk); err != nil {
+					return
+				}
 			}
 		}
 	}
@@ -221,20 +219,20 @@ func (jbo *impl) doTask(id string) (err error) {
 
 	for n = range jbo.StartPriority {
 		for elm = jbo.ProcessList.Front(); elm != nil; elm = elm.Next() {
-			if prc, ok = elm.Value.(*Process); !ok {
+			if prc, ok = elm.Value.(*Process); !ok || prc == nil {
 				continue
 			}
-			if prc.Task == nil {
-				continue
-			}
-			if id != "" && prc.Task.ID != id {
-				continue
-			} else if !prc.Task.State.Conf.Autostart ||
-				prc.Task.ID != jbo.StartPriority[n] {
-				continue
-			}
-			if err = jbo.runTask(prc.Task); err != nil {
-				return
+			switch wrk := prc.P.(type) {
+			case *types.Task:
+				if id != "" && wrk.ID != id {
+					continue
+				} else if !wrk.State.Conf.Autostart ||
+					wrk.ID != jbo.StartPriority[n] {
+					continue
+				}
+				if err = jbo.runTask(wrk); err != nil {
+					return
+				}
 			}
 		}
 	}

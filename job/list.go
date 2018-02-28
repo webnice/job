@@ -5,6 +5,8 @@ package job // import "gopkg.in/webnice/job.v1/job"
 import (
 	"container/list"
 	"strings"
+
+	"gopkg.in/webnice/job.v1/types"
 )
 
 // List Список зарегистрированных процессов
@@ -14,27 +16,27 @@ func (jbo *impl) List() (ret []Info) {
 	var ok bool
 
 	for elm = jbo.ProcessList.Front(); elm != nil; elm = elm.Next() {
-		if item, ok = elm.Value.(*Process); !ok {
+		if item, ok = elm.Value.(*Process); !ok || item == nil {
 			continue
 		}
-		switch {
-		case item.Task != nil:
+		switch wrk := item.P.(type) {
+		case *types.Task:
 			ret = append(ret, Info{
-				ID:    item.Task.ID,
+				ID:    wrk.ID,
 				Type:  TTask,
-				IsRun: item.Task.State.IsRun.Load().(bool),
+				IsRun: wrk.State.IsRun.Load().(bool),
 			})
-		case item.Worker != nil:
+		case *types.Worker:
 			ret = append(ret, Info{
-				ID:    item.Worker.ID,
+				ID:    wrk.ID,
 				Type:  TWorker,
-				IsRun: item.Worker.State.IsRun.Load().(bool),
+				IsRun: wrk.State.IsRun.Load().(bool),
 			})
-		case item.ForkWorker != nil:
+		case *types.ForkWorker:
 			ret = append(ret, Info{
-				ID:    item.ForkWorker.ID,
+				ID:    wrk.ID,
 				Type:  TForkWorker,
-				IsRun: item.ForkWorker.State.IsRun.Load().(bool),
+				IsRun: wrk.State.IsRun.Load().(bool),
 			})
 		}
 	}
