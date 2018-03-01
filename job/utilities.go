@@ -4,25 +4,9 @@ package job // import "gopkg.in/webnice/job.v1/job"
 //import "gopkg.in/webnice/log.v2"
 import (
 	"fmt"
-	"os"
-	"reflect"
 	runtimeDebug "runtime/debug"
 	"sync"
 )
-
-// Получение уникального имени пакета + имя структуры
-func getStructName(obj interface{}) string {
-	var rt reflect.Type
-	var packageName, structureName string
-
-	if rt = reflect.TypeOf(obj); rt.Kind() == reflect.Ptr {
-		rt = rt.Elem()
-	}
-	structureName = rt.Name()
-	packageName = rt.PkgPath()
-
-	return packageName + string(os.PathSeparator) + structureName
-}
 
 // Безопасный метод отправки пустой структуры (сигнала) в канал
 func safeChannelSend(ch chan<- struct{}) {

@@ -240,6 +240,11 @@ func (jbo *impl) doTask(id string) (err error) {
 	return
 }
 
+// IsCancelled Проверка состояния прерывания работы
+// Истина - выполняется прерывание работы всех воркеров
+// Ложь - разрешено выполнение воркеров
+func (jbo *impl) IsCancelled() bool { return jbo.Exit.Load().(bool) }
+
 // Cancel Сигнал завершения всех запущенных процессов
 // Сигнал будет так же передан в подпроцессы запущенные как ForkWorker
 func (jbo *impl) Cancel() { jbo.Event <- &event.Event{Act: event.ECancel} }

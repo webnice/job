@@ -25,6 +25,11 @@ func Get() Interface { return singleton }
 // Error Последняя внутренняя ошибка
 func Error() error { return singleton.Err }
 
+// IsCancelled Проверка состояния прерывания работы
+// Истина - выполняется прерывание работы всех воркеров
+// Ложь - разрешено выполнение воркеров
+func IsCancelled() bool { return singleton.IsCancelled() }
+
 // Cancel Сигнал завершения всех запущенных процессов
 func Cancel() { singleton.Cancel() }
 

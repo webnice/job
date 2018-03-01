@@ -40,6 +40,11 @@ type Interface interface {
 	// Error Последняя внутренняя ошибка
 	Error() error
 
+	// IsCancelled Проверка состояния прерывания работы
+	// Истина - выполняется прерывание работы всех воркеров
+	// Ложь - разрешено выполнение воркеров
+	IsCancelled() bool
+
 	// Cancel Сигнал завершения всех запущенных процессов
 	Cancel()
 
@@ -126,3 +131,10 @@ type Type string
 
 // String Convert type to string
 func (tpe Type) String() string { return string(tpe) }
+
+// ID Идентификатор процесса
+type ID struct {
+	name         string
+	serialNumber uint64
+	pid          int64
+}
