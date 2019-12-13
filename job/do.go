@@ -18,13 +18,13 @@ func (jbo *impl) getConfiguration() (err error) {
 
 	if err = jbo.RegisteredProcessIterate(
 		func(elm *list.Element, prc *Process) (e error) {
-			cfg, e = prc.InfoRequest()
-			switch {
-			case e != nil:
+			if cfg, e = prc.InfoRequest(); e != nil {
 				return
-			case cfg == nil:
-				e = prc.Configuration(jobTypes.DefaultConfiguration())
 			}
+			if cfg == nil {
+				cfg = jobTypes.DefaultConfiguration()
+			}
+			e = prc.Configuration(cfg)
 			return
 		}); err != nil {
 		return
