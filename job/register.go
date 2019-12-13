@@ -1,9 +1,11 @@
 package job // import "gopkg.in/webnice/job.v1/job"
 
-import "gopkg.in/webnice/debug.v1"
-import "gopkg.in/webnice/log.v2"
+//import "gopkg.in/webnice/debug.v1"
+//import "gopkg.in/webnice/log.v2"
 import (
 	"container/list"
+	"fmt"
+	"strconv"
 
 	jobTypes "gopkg.in/webnice/job.v1/types"
 )
@@ -12,16 +14,16 @@ import (
 func (jbo *impl) CreateTaskID(obj Task) (ret string) {
 	var (
 		err   error
-		id    string
 		found []string
+		max   uint64
+		cur   uint64
+		tmp   []string
+		n     int
 	)
 
 	jbo.TaskIDSync.Lock()
 	defer jbo.TaskIDSync.Unlock()
-	id = getStructName(obj)
-
-	log.Debug(debug.DumperString(id))
-
+	ret = getStructName(obj)
 	// Поиск всех совпадающих ID процессов
 	if err = jbo.RegisteredProcessIterate(
 		func(elm *list.Element, prc *Process) (e error) {
@@ -32,15 +34,26 @@ func (jbo *impl) CreateTaskID(obj Task) (ret string) {
 			if tid, e = prc.ID(); e != nil {
 				return
 			}
-			if full, partial = jbo.compareID(tid, id, 0); full || partial {
+			if full, partial = jbo.compareID(tid, ret, 0); full || partial {
 				found = append(found, tid)
 			}
 			return
 		}); err != nil {
 		return
 	}
-
-	log.Debug(debug.DumperString(found))
+	if len(found) > 0 {
+		for n = range found {
+			if tmp = rexNameMatch.FindStringSubmatch(found[n]); len(tmp) != 4 {
+				continue
+			}
+			cur, _ = strconv.ParseUint(tmp[3], 10, 64)
+			if cur > max {
+				max = cur
+			}
+		}
+		max++
+		ret = fmt.Sprintf("%s-%d", ret, max)
+	}
 
 	return
 }
