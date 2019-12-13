@@ -13,6 +13,7 @@ import (
 // Parse Разбирается переданная строка в объект ID
 func (ido *ID) Parse(src string) (ret *ID, err error) {
 	var tmp []string
+
 	ret = new(ID)
 	tmp = strings.Split(src, ":")
 	ret.name = tmp[0]
@@ -22,6 +23,7 @@ func (ido *ID) Parse(src string) (ret *ID, err error) {
 	if len(tmp) >= 3 {
 		ret.pid, _ = strconv.ParseInt(tmp[2], 10, 64)
 	}
+
 	return
 }
 
@@ -69,8 +71,10 @@ func (ido *ID) EqualFold(id string) bool { return strings.EqualFold(ido.String()
 
 // Получение уникального имени пакета + имя структуры
 func getStructName(obj interface{}) string {
-	var rt reflect.Type
-	var packageName, structureName string
+	var (
+		rt                         reflect.Type
+		packageName, structureName string
+	)
 
 	if rt = reflect.TypeOf(obj); rt.Kind() == reflect.Ptr {
 		rt = rt.Elem()

@@ -19,6 +19,7 @@ func (jbo *impl) Reset() Interface {
 	if jbo.CancelFunc != nil {
 		jbo.CancelFunc()
 	}
+	jbo.TaskIDSync = new(sync.Mutex)
 	jbo.Ctx, jbo.CancelFunc = context.WithCancel(context.Background())
 	// Пул структур
 	jbo.Pool = jobPool.New()

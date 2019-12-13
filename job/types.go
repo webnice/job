@@ -50,13 +50,13 @@ type Interface interface {
 	RegisterChangeStateFunc(fn OnChangeStateFunc) Interface
 
 	// RegisterTask Регистрация простой управляемой задачи
-	RegisterTask(obj Task)
+	RegisterTask(obj Task) (ret string)
 
 	// RegisterWorker Регистрация управляемого работника
-	RegisterWorker(obj Worker)
+	RegisterWorker(obj Worker) (ret string)
 
 	// RegisterForkWorker Регистрация управляемого работника
-	RegisterForkWorker(obj ForkWorker)
+	RegisterForkWorker(obj ForkWorker) (ret string)
 
 	// UnregisterErrorFunc Удаление ранее зарегистрированной функции получения ошибок
 	UnregisterErrorFunc() Interface
@@ -98,6 +98,7 @@ type impl struct {
 	StopPriority    []string             // Списко идентификаторов процессов отсортированных в порядке приоритета остановки
 	Event           chan *jobEvent.Event // Канал внутренних событий
 	Exit            atomic.Value         // Если =true, выполняется завершение работы. Запрещён запуск и перезапуск процессов
+	TaskIDSync      *sync.Mutex          // Мьютекс для генерации ID задачи
 }
 
 // Process Ссылка на процесс
