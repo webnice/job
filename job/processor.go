@@ -6,13 +6,13 @@ import (
 	"container/list"
 	"time"
 
-	"gopkg.in/webnice/job.v1/event"
-	"gopkg.in/webnice/job.v1/types"
+	jobEvent "gopkg.in/webnice/job.v1/event"
+	jobTypes "gopkg.in/webnice/job.v1/types"
 )
 
 // Горутина обработки событий
 func (jbo *impl) EventProcessor() {
-	var evt *event.Event
+	var evt *jobEvent.Event
 
 	for {
 		// nil приходит при пересоздании канала по команде Reset()
@@ -21,33 +21,34 @@ func (jbo *impl) EventProcessor() {
 		}
 		switch evt.Act {
 		// Отправка всем запущенным процессам сигнала Cancel()
-		case event.ECancel:
+		case jobEvent.ECancel:
 			jbo.eventCancel()
 		// События ошибок
-		case event.EOnError, event.ECancelError:
+		case jobEvent.EOnError, jobEvent.ECancelError:
 			jbo.eventError(evt)
 		// Изменение состояния процесса
-		case event.EProcessStarted:
+		case jobEvent.EProcessStarted:
 			jbo.eventChangeState(evt, true)
-		case event.EProcessStoped:
+		case jobEvent.EProcessStoped:
 			jbo.eventChangeState(evt, false)
-		case event.ERestartProcess:
+		case jobEvent.ERestartProcess:
 			jbo.eventRestartProcess(evt)
-		case event.EProcessFatality:
+		case jobEvent.EProcessFatality:
 			jbo.eventFatality(evt)
-
 		// Любое не известное событие
 		default:
-			log.Debugf("\n%s", debug.DumperString(evt))
+			log.Criticalf("not implemented event:\n%s", debug.DumperString(evt))
 		}
 	}
 }
 
 // Сигнал завершения всех запущенных процессов
 func (jbo *impl) eventCancel() {
-	var elm *list.Element
-	var prc *Process
-	var ok bool
+	var (
+		elm *list.Element
+		prc *Process
+		ok  bool
+	)
 
 	jbo.Exit.Store(true)
 	for elm = jbo.ProcessList.Front(); elm != nil; elm = elm.Next() {
@@ -55,15 +56,15 @@ func (jbo *impl) eventCancel() {
 			continue
 		}
 		switch wrk := prc.P.(type) {
-		case *types.Task:
+		case *jobTypes.Task:
 			if wrk.State.IsRun.Load().(bool) {
 				wrk.Cancel()
 			}
-		case *types.Worker:
+		case *jobTypes.Worker:
 			if wrk.State.IsRun.Load().(bool) {
 				wrk.Cancel()
 			}
-		case *types.ForkWorker:
+		case *jobTypes.ForkWorker:
 			if wrk.State.IsRun.Load().(bool) {
 				wrk.Cancel()
 			}
@@ -72,7 +73,7 @@ func (jbo *impl) eventCancel() {
 }
 
 // Выполнение внешней функции принимающей события ошибок
-func (jbo *impl) eventError(evt *event.Event) {
+func (jbo *impl) eventError(evt *jobEvent.Event) {
 	defer func() { _ = recover() }()
 
 	if jbo.ErrorFunc == nil {
@@ -82,7 +83,7 @@ func (jbo *impl) eventError(evt *event.Event) {
 }
 
 // Выполнение внешней функции принимающей событие изменения статуса процесса
-func (jbo *impl) eventChangeState(evt *event.Event, running bool) {
+func (jbo *impl) eventChangeState(evt *jobEvent.Event, running bool) {
 	defer func() { _ = recover() }()
 
 	if jbo.ChangeStateFunc == nil {
@@ -92,46 +93,44 @@ func (jbo *impl) eventChangeState(evt *event.Event, running bool) {
 }
 
 // Событие перезапуска процесса завершившегося без ошибки
-func (jbo *impl) eventRestartProcess(evt *event.Event) {
-	var elm *list.Element
-	var prc *Process
-	var ok bool
-
+func (jbo *impl) eventRestartProcess(evt *jobEvent.Event) {
 	if jbo.Exit.Load().(bool) {
 		return
 	}
-	for elm = jbo.ProcessList.Front(); elm != nil; elm = elm.Next() {
-		if prc, ok = elm.Value.(*Process); !ok || prc == nil {
-			continue
-		}
+
+	jbo.err = jbo.RegisteredProcessIterate(func(elm *list.Element, prc *Process) (e error) {
 		switch wrk := prc.P.(type) {
-		case *types.Task:
+		case *jobTypes.Task:
 			if wrk.ID != evt.TargetID {
-				continue
+				return
 			}
 			// Перезапуск процесса с таймаутом
 			go jbo.doTaskWithTimeout(wrk, wrk.State.Conf.RestartTimeout)
-		case *types.Worker:
+		case *jobTypes.Worker:
 			if wrk.ID != evt.TargetID {
-				continue
+				return
 			}
 			// Перезапуск процесса с таймаутом
 			go jbo.doTaskWithTimeout(wrk, wrk.State.Conf.RestartTimeout)
-		case *types.ForkWorker:
+		case *jobTypes.ForkWorker:
 			if wrk.ID != evt.TargetID {
-				continue
+				return
 			}
 			// Перезапуск процесса с таймаутом
 			go jbo.doTaskWithTimeout(wrk, wrk.State.Conf.RestartTimeout)
 		}
-	}
+
+		return
+	})
 }
 
 // Перезапуск процесса с таймаутом
 func (jbo *impl) doTaskWithTimeout(proc interface{}, tm time.Duration) {
-	var err error
-	var tmr *time.Timer
-	var id string
+	var (
+		err error
+		tmr *time.Timer
+		id  string
+	)
 
 	if tm > 0 {
 		tmr = time.NewTimer(tm)
@@ -139,25 +138,25 @@ func (jbo *impl) doTaskWithTimeout(proc interface{}, tm time.Duration) {
 		<-tmr.C
 	}
 	switch proc.(type) {
-	case *types.Task:
-		if item, ok := proc.(*types.Task); ok {
+	case *jobTypes.Task:
+		if item, ok := proc.(*jobTypes.Task); ok {
 			id, err = item.ID, jbo.runTask(item)
 		}
-	case *types.Worker:
-		if item, ok := proc.(*types.Worker); ok {
+	case *jobTypes.Worker:
+		if item, ok := proc.(*jobTypes.Worker); ok {
 			id, err = item.ID, jbo.runWorker(item)
 		}
-	case *types.ForkWorker:
-		if item, ok := proc.(*types.ForkWorker); ok {
+	case *jobTypes.ForkWorker:
+		if item, ok := proc.(*jobTypes.ForkWorker); ok {
 			id, err = item.ID, jbo.runForkWorker(item)
 		}
 	}
 	if err != nil {
-		jbo.Event <- &event.Event{Act: event.EOnError, SourceID: id, Err: err}
+		jbo.Event <- &jobEvent.Event{Act: jobEvent.EOnError, SourceID: id, Err: err}
 	}
 }
 
 // Фатальная ошибка, остановка и выход
-func (jbo *impl) eventFatality(evt *event.Event) {
+func (jbo *impl) eventFatality(evt *jobEvent.Event) {
 	jbo.eventCancel()
 }

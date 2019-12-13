@@ -5,27 +5,28 @@ package job // import "gopkg.in/webnice/job.v1/job"
 import (
 	"time"
 
-	"gopkg.in/webnice/job.v1/types"
+	jobTypes "gopkg.in/webnice/job.v1/types"
 )
 
 // Task Интерфейс простой управляемой задачи
-type Task types.TaskInterface
+type Task jobTypes.TaskInterface
 
 // Worker Интерфейс управляемого работника
 // Работник запускается в текущей копии приложения
-type Worker types.WorkerInterface
+type Worker jobTypes.WorkerInterface
 
 // ForkWorker Интерфейс управляемого работника
 // Работник запускается в новой копии приложения через syscall.ForkExec() - изолированный и убиваемый извне процесс
-type ForkWorker types.ForkWorkerInterface
+type ForkWorker jobTypes.ForkWorkerInterface
 
 // Get Gets an interface of a package
 func Get() Interface { return singleton }
 
-// Error Последняя внутренняя ошибка
-func Error() error { return singleton.Err }
+// Err Последняя внутренняя ошибка
+func Err() error { return singleton.err }
 
-// IsCancelled Проверка состояния прерывания работы. Если передан не пустой id, то проверяется состояние для процесса, если передан пустой, то проверяется общее состояние для всех процессов.
+// IsCancelled Проверка состояния прерывания работы. Если передан не пустой id, то проверяется состояние для процесса,
+// если передан пустой, то проверяется общее состояние для всех процессов.
 // Истина - выполняется прерывание работы
 // Ложь - разрешено нормальное выполнение процессов
 func IsCancelled(id string) bool { return singleton.IsCancelled(id) }
@@ -38,7 +39,7 @@ func Cancel() { singleton.Cancel() }
 func Do() error { return singleton.Do() }
 
 // List of all registered processes
-func List() []Info { return singleton.List() }
+func List() []*Info { return singleton.List() }
 
 // RegisterErrorFunc Регистрация функции получения ошибок в работе управляемых процессов
 func RegisterErrorFunc(fn OnErrorFunc) Interface { return singleton.RegisterErrorFunc(fn) }
@@ -64,12 +65,3 @@ func Wait() Interface { return singleton.Wait() }
 
 // WaitWithTimeout Ожидание завершения всех работающих процессов, но не более чем время указанное в timeout
 func WaitWithTimeout(timeout time.Duration) Interface { return singleton.WaitWithTimeout(timeout) }
-
-// ProcessDataExchange Функция вызывается из процесса для регистрации функции
-// получения данных и получения функции отправки результата
-// id - Идентификатор процесса, полученный процессом при вызове функции Info
-// req - Функция получения данных, будет вызываться каждый раз, когда приходят внешние данные
-// rsp - Функция отправки данных, можно вызывать многократно, для отправки данных
-//func ProcessDataExchange(id string, req types.RequestFunc) types.ResponseFunc {
-//	return singleton.ProcessDataExchange(id, req)
-//}

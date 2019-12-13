@@ -7,9 +7,11 @@ import (
 )
 
 func TestReset(t *testing.T) {
-	var oldContext = singleton.Ctx
-	var oldPool = singleton.Pool
-	var oldWg = singleton.Wg
+	var (
+		oldContext = singleton.Ctx
+		oldPool    = singleton.Pool
+		oldWg      = singleton.Wg
+	)
 
 	Get().Reset()
 	if singleton.CancelFunc == nil {

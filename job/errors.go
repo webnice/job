@@ -2,35 +2,72 @@ package job // import "gopkg.in/webnice/job.v1/job"
 
 //import "gopkg.in/webnice/debug.v1"
 //import "gopkg.in/webnice/log.v2"
-import "fmt"
 
-var (
-	errNotImplemented             = fmt.Errorf("Not implemented")
-	errUnregisterProcessIsRunning = fmt.Errorf("The process is current running, you must first stop the process")
-	errRegistredProcessNotFound   = fmt.Errorf("Registred process with the specified identifier was not found")
-	errDeadlineExceeded           = fmt.Errorf("Deadline exceeded")
-	errProcessesAreStillRunning   = fmt.Errorf("One or more processes are still running")
-	errProcessAlreadyRunning      = fmt.Errorf("Process already running")
-	errProcessNotFound            = fmt.Errorf("Process not found")
+// Все ошибки определены как константы
+const (
+	cUnexpectedError            = "Unexpected error"
+	cNotImplemented             = "Not implemented"
+	cTypeNotImplemented         = "Type of process is not implemented"
+	cUnregisterProcessIsRunning = "The process is current running, you must first stop the process"
+	cRegisteredProcessNotFound  = "Registered process with the specified identifier was not found"
+	cDeadlineExceeded           = "Deadline exceeded"
+	cProcessesAreStillRunning   = "One or more processes are still running"
+	cProcessAlreadyRunning      = "Process already running"
+	cProcessNotFound            = "Process not found"
 )
 
-// ErrorNotImplemented Not implemented
-func ErrorNotImplemented() error { return errNotImplemented }
+// Константы указаны в объектах, адрес которых фиксирован всё время работы приложения
+// Ошибку с ошибкой можно сравнивать по телу, по адресу и т.п.
+var (
+	errSingleton                  = &Error{}
+	errUnexpectedError            = err(cUnexpectedError)
+	errNotImplemented             = err(cNotImplemented)
+	errTypeNotImplemented         = err(cTypeNotImplemented)
+	errUnregisterProcessIsRunning = err(cUnregisterProcessIsRunning)
+	errRegisteredProcessNotFound  = err(cRegisteredProcessNotFound)
+	errDeadlineExceeded           = err(cDeadlineExceeded)
+	errProcessesAreStillRunning   = err(cProcessesAreStillRunning)
+	errProcessAlreadyRunning      = err(cProcessAlreadyRunning)
+	errProcessNotFound            = err(cProcessNotFound)
+)
 
-// ErrorUnregisterProcessIsRunning The process is current running, you must first stop the process
-func ErrorUnregisterProcessIsRunning() error { return errUnregisterProcessIsRunning }
+type (
+	// Error object of package
+	Error struct{}
+	err   string
+)
 
-// ErrorRegistredProcessNotFound Registred process with the specified identifier was not found
-func ErrorRegistredProcessNotFound() error { return errRegistredProcessNotFound }
+// Error The error built-in interface implementation
+func (e err) Error() string { return string(e) }
 
-// ErrorDeadlineExceeded Deadline exceeded
-func ErrorDeadlineExceeded() error { return errDeadlineExceeded }
+// Errors Все ошибки известного состояния, которые могут вернуть функции пакета
+func Errors() *Error { return errSingleton }
 
-// ErrorProcessesAreStillRunning One or more processes are still running
-func ErrorProcessesAreStillRunning() error { return errProcessesAreStillRunning }
+// ERRORS:
 
-// ErrorProcessAlreadyRunning Process already running
-func ErrorProcessAlreadyRunning() error { return errProcessAlreadyRunning }
+// UnexpectedError Unexpected error
+func (e *Error) UnexpectedError() error { return &errUnexpectedError }
 
-// ErrorProcessNotFound Process not found
-func ErrorProcessNotFound() error { return errProcessNotFound }
+// NotImplemented Not implemented
+func (e *Error) NotImplemented() error { return &errNotImplemented }
+
+// TypeNotImplemented Type of process is not implemented
+func (e *Error) TypeNotImplemented() error { return &errTypeNotImplemented }
+
+// UnregisterProcessIsRunning The process is current running, you must first stop the process
+func (e *Error) UnregisterProcessIsRunning() error { return &errUnregisterProcessIsRunning }
+
+// RegisteredProcessNotFound Registered process with the specified identifier was not found
+func (e *Error) RegisteredProcessNotFound() error { return &errRegisteredProcessNotFound }
+
+// DeadlineExceeded Deadline exceeded
+func (e *Error) DeadlineExceeded() error { return &errDeadlineExceeded }
+
+// ProcessesAreStillRunning One or more processes are still running
+func (e *Error) ProcessesAreStillRunning() error { return &errProcessesAreStillRunning }
+
+// ProcessAlreadyRunning Process already running
+func (e *Error) ProcessAlreadyRunning() error { return &errProcessAlreadyRunning }
+
+// ProcessNotFound Process not found
+func (e *Error) ProcessNotFound() error { return &errProcessNotFound }

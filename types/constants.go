@@ -2,16 +2,26 @@ package types // import "gopkg.in/webnice/job.v1/types"
 
 //import "gopkg.in/webnice/debug.v1"
 //import "gopkg.in/webnice/log.v2"
-import (
-	"time"
-)
+import "time"
 
 const (
-	// LowPriopity Константа наименьшего приоритета
-	LowPriopity = int32(^uint32(0) >> 1)
+	// TypeTask Процесс является task
+	TypeTask = Type(`task`)
 
-	// HighPriopity Константа наивысшего приоритета
-	HighPriopity = int32(^1 << 30)
+	// TypeWorker Процесс является worker
+	TypeWorker = Type(`worker`)
+
+	// TypeForkWorker Процесс является forkworker
+	TypeForkWorker = Type(`forkworker`)
+
+	// Размер буфера событий
+	EventBufLength = int(10000)
+
+	// LowPriority Константа наименьшего приоритета
+	LowPriority = int32(^uint32(0) >> 1)
+
+	// HighPriority Константа наивысшего приоритета
+	HighPriority = int32(^1 << 30)
 
 	// DefaultRestartTimeout Время ожидания между перезапусками остановившегося процесса
 	DefaultRestartTimeout = time.Second / 4
@@ -26,3 +36,9 @@ var defaultConfiguration = &Configuration{
 	RestartTimeout: DefaultRestartTimeout,
 	KillTimeout:    DefaultKillTimeout,
 }
+
+// Type Тип процесса
+type Type string
+
+// String Convert type to string
+func (tpe Type) String() string { return string(tpe) }

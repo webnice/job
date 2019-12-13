@@ -6,15 +6,14 @@ import (
 	"context"
 	"time"
 
-	"gopkg.in/webnice/job.v1/event"
-	"gopkg.in/webnice/job.v1/types"
+	jobEvent "gopkg.in/webnice/job.v1/event"
+	jobTypes "gopkg.in/webnice/job.v1/types"
 )
 
 // Запуск процесса forkworker
-func (jbo *impl) runForkWorker(prc *types.ForkWorker) (err error) {
+func (jbo *impl) runForkWorker(prc *jobTypes.ForkWorker) (err error) {
 
-	// TODO
-	// Скопировать запуск из wdaccessatomic
+	// TODO Скопировать запуск из wdaccessatomic
 
 	//debug.Dumper(prc)
 
@@ -22,23 +21,23 @@ func (jbo *impl) runForkWorker(prc *types.ForkWorker) (err error) {
 }
 
 // Запуск процесса worker
-func (jbo *impl) runWorker(prc *types.Worker) (err error) {
+func (jbo *impl) runWorker(prc *jobTypes.Worker) (err error) {
 	if prc.State.IsRun.Load().(bool) {
-		err = ErrorProcessAlreadyRunning()
+		err = jbo.Errors().ProcessAlreadyRunning()
 		return
 	}
 	// Prepare()
 	if err = safeCall(prc.Self.Prepare); err != nil {
-		jbo.Event <- &event.Event{Act: event.EOnError, SourceID: prc.ID, Err: err}
+		jbo.Event <- &jobEvent.Event{Act: jobEvent.EOnError, SourceID: prc.ID, Err: err}
 		return
 	}
 	prc.State.IsRun.Store(true)
 	jbo.Wg.Add(1)
-	go func(prc *types.Worker) {
+	go func(prc *jobTypes.Worker) {
 		defer func() {
 			prc.State.IsRun.Store(false)
 			safeWgDone(jbo.Wg)
-			jbo.Event <- &event.Event{Act: event.EProcessStoped, SourceID: prc.ID}
+			jbo.Event <- &jobEvent.Event{Act: jobEvent.EProcessStoped, SourceID: prc.ID}
 		}()
 		jbo.runProc(prc.Ctx, prc.Self, &prc.Pith)
 	}(prc)
@@ -47,18 +46,18 @@ func (jbo *impl) runWorker(prc *types.Worker) (err error) {
 }
 
 // Запуск процесса task
-func (jbo *impl) runTask(prc *types.Task) (err error) {
+func (jbo *impl) runTask(prc *jobTypes.Task) (err error) {
 	if prc.State.IsRun.Load().(bool) {
-		err = ErrorProcessAlreadyRunning()
+		err = jbo.Errors().ProcessAlreadyRunning()
 		return
 	}
 	prc.State.IsRun.Store(true)
 	jbo.Wg.Add(1)
-	go func(prc *types.Task) {
+	go func(prc *jobTypes.Task) {
 		defer func() {
 			prc.State.IsRun.Store(false)
 			safeWgDone(jbo.Wg)
-			jbo.Event <- &event.Event{Act: event.EProcessStoped, SourceID: prc.ID}
+			jbo.Event <- &jobEvent.Event{Act: jobEvent.EProcessStoped, SourceID: prc.ID}
 		}()
 		jbo.runProc(prc.Ctx, prc.Self, &prc.Pith)
 	}(prc)
@@ -67,26 +66,26 @@ func (jbo *impl) runTask(prc *types.Task) (err error) {
 }
 
 // Запуск основного процесса с прерыванием
-func (jbo *impl) runProc(ctx context.Context, pri types.BaseInterface, pith *types.Pith) {
+func (jbo *impl) runProc(ctx context.Context, pri jobTypes.BaseInterface, pith *jobTypes.Pith) {
 	var pex = make(chan struct{})
 
 	defer func() { close(pex) }()
 	go func() {
 		var err error
 		defer func() { safeChannelSend(pex) }()
-		jbo.Event <- &event.Event{Act: event.EProcessStarted, SourceID: pith.ID}
+		jbo.Event <- &jobEvent.Event{Act: jobEvent.EProcessStarted, SourceID: pith.ID}
 		err = safeCall(pri.Worker)
 		if err != nil {
 			// Отправка события ошибки
-			jbo.Event <- &event.Event{Act: event.EOnError, SourceID: pith.ID, Err: err}
+			jbo.Event <- &jobEvent.Event{Act: jobEvent.EOnError, SourceID: pith.ID, Err: err}
 		}
 		if err != nil && pith.State.Conf.Fatality {
 			// Отправка события фатального завершения всех процессов и приложения
-			jbo.Event <- &event.Event{Act: event.EProcessFatality, SourceID: pith.ID, Err: err}
+			jbo.Event <- &jobEvent.Event{Act: jobEvent.EProcessFatality, SourceID: pith.ID, Err: err}
 		}
 		if err == nil && pith.State.Conf.Restart {
 			// Перезапуск остановившегося без ошибки процесса
-			jbo.Event <- &event.Event{Act: event.ERestartProcess, SourceID: pith.ID, TargetID: pith.ID}
+			jbo.Event <- &jobEvent.Event{Act: jobEvent.ERestartProcess, SourceID: pith.ID, TargetID: pith.ID}
 		}
 	}()
 	select {
@@ -97,7 +96,7 @@ func (jbo *impl) runProc(ctx context.Context, pri types.BaseInterface, pith *typ
 	case <-ctx.Done():
 		// Прерывание выполнения
 		if err := safeCall(pri.Cancel); err != nil {
-			jbo.Event <- &event.Event{Act: event.ECancelError, SourceID: pith.ID, Err: err}
+			jbo.Event <- &jobEvent.Event{Act: jobEvent.ECancelError, SourceID: pith.ID, Err: err}
 		}
 		if pith.State.Conf.CancelTimeout > 0 {
 			// Таймаут ожидания завершения процесса после выполнения функции Cancel()

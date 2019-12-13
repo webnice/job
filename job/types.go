@@ -5,42 +5,34 @@ package job // import "gopkg.in/webnice/job.v1/job"
 import (
 	"container/list"
 	"context"
+	"regexp"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"gopkg.in/webnice/job.v1/event"
-	"gopkg.in/webnice/job.v1/pool"
+	jobEvent "gopkg.in/webnice/job.v1/event"
+	jobPool "gopkg.in/webnice/job.v1/pool"
+	jobTypes "gopkg.in/webnice/job.v1/types"
 )
 
-const (
-	// TTask Процесс является task
-	TTask = Type(`task`)
+var (
+	singleton *impl
 
-	// TWorker Процесс является worker
-	TWorker = Type(`worker`)
-
-	// TForkWorker Процесс является forkworker
-	TForkWorker = Type(`forkworker`)
-
-	_EventBufLength = int(10000)
+	// Регэксп для сравнения имени процесса
+	rexNameMatch = regexp.MustCompile(`(?ms)^(.+?)(\-(\d+))*$`)
 )
-
-var singleton *impl
 
 // Interface is an interface of job package
 type Interface interface {
-	// Do Запуск библиотеки, подготовка и запуск процессов
+	// Do Запуск библиотеки, подготовка и запуск процессов с флагом Autostart
 	// Ошибка возвращается в случае наличия фатальной ошибки из за которой продолжение работы не возможно
 	Do() error
 
 	// Start Отправка команды запуска процесса
 	Start(id string) error
 
-	// Error Последняя внутренняя ошибка
-	Error() error
-
-	// IsCancelled Проверка состояния прерывания работы. Если передан не пустой id, то проверяется состояние для процесса, если передан пустой, то проверяется общее состояние для всех процессов.
+	// IsCancelled Проверка состояния прерывания работы. Если передан не пустой id,
+	// тогда проверяется состояние для процесса, если передан пустой, то проверяется общее состояние для всех процессов.
 	// Истина - выполняется прерывание работы
 	// Ложь - разрешено нормальное выполнение процессов
 	IsCancelled(id string) bool
@@ -49,9 +41,9 @@ type Interface interface {
 	Cancel()
 
 	// List Список зарегистрированных процессов
-	List() []Info
+	List() []*Info
 
-	// RegisterErrorFunc Регистрация функции получения ошибок в работе управляемых процессов
+	// RegisterErrorFunc Регистрация функции получения ошибок о работе управляемых процессов
 	RegisterErrorFunc(fn OnErrorFunc) Interface
 
 	// RegisterChangeStateFunc Регистрация функции получения изменения состояния процессов
@@ -75,7 +67,7 @@ type Interface interface {
 
 	// Reset Сброс библиотеки, подготовка к повторному использованию
 	// Если были запущены процессы, то контроль над ними будет потерян
-	Reset()
+	Reset() Interface
 
 	// Wait Ожидание завершения всех работающих процессов
 	Wait() Interface
@@ -83,34 +75,35 @@ type Interface interface {
 	// WaitWithTimeout Ожидание завершения всех работающих процессов, но не более чем время указанное в timeout
 	WaitWithTimeout(timeout time.Duration) Interface
 
-	// ProcessDataExchange Функция вызывается из процесса для регистрации функции
-	// получения данных и получения функции отправки результата
-	// id - Идентификатор процесса, полученный процессом при вызове функции Info
-	// req - Функция получения данных, будет вызываться каждый раз, когда приходят внешние данные
-	// rsp - Функция отправки данных, можно вызывать многократно, для отправки данных
-	//ProcessDataExchange(id string, req types.RequestFunc) types.ResponseFunc
+	// ОШИБКИ
+
+	// Err Последняя внутренняя ошибка
+	Err() error
+
+	// Errors Все ошибки известного состояния, которые могут вернуть функции пакета
+	Errors() *Error
 }
 
 // impl is an implementation of package
 type impl struct {
-	Ctx             context.Context    // Context of package
-	CancelFunc      context.CancelFunc // Функция прерывания ожидания
-	Pool            pool.Interface     // Интерфейс пула управляющих данных
-	ProcessList     *list.List         // List of jobs, хранит объекты *Process
-	ErrorFunc       OnErrorFunc        // Функция получения ошибок процессов
-	ChangeStateFunc OnChangeStateFunc  // Функция изменения состояния процессов
-	Err             error              // Последняя внутренняя ошибка
-	Wg              *sync.WaitGroup    // Ожидание завершения всех выполняющихся задач
-	StartPriority   []string           // Списко идентификаторов процессов отсортированных в порядке приоритета запуска
-	StopPriority    []string           // Списко идентификаторов процессов отсортированных в порядке приоритета остановки
-	Event           chan *event.Event  // Канал внутренних событий
-	Exit            atomic.Value       // Если =true, выполняется завершение работы. Запрещён запуск и перезапуск процессов
+	err             error                // Последняя внутренняя ошибка
+	Ctx             context.Context      // Context of package
+	CancelFunc      context.CancelFunc   // Функция прерывания ожидания
+	Pool            jobPool.Interface    // Интерфейс пула управляющих данных
+	ProcessList     *list.List           // List of jobs, хранит объекты *Process
+	ErrorFunc       OnErrorFunc          // Функция получения ошибок процессов
+	ChangeStateFunc OnChangeStateFunc    // Функция изменения состояния процессов
+	Wg              *sync.WaitGroup      // Ожидание завершения всех выполняющихся задач
+	StartPriority   []string             // Списко идентификаторов процессов отсортированных в порядке приоритета запуска
+	StopPriority    []string             // Списко идентификаторов процессов отсортированных в порядке приоритета остановки
+	Event           chan *jobEvent.Event // Канал внутренних событий
+	Exit            atomic.Value         // Если =true, выполняется завершение работы. Запрещён запуск и перезапуск процессов
 }
 
 // Process Ссылка на процесс
 type Process struct {
-	// P Присваиваются: *types.Task, *types.Worker, *types.ForkWorker
-	P interface{}
+	P    interface{}   // Присваиваются: *types.Task, *types.Worker, *types.ForkWorker
+	Type jobTypes.Type // Тип процесса, значения: task, worker, forkworker
 }
 
 // OnErrorFunc Функция получения ошибок
@@ -121,16 +114,10 @@ type OnChangeStateFunc func(id string, running bool)
 
 // Info information about workers in memory
 type Info struct {
-	ID    string // Идентификатор процесса
-	Type  Type   // Тип процесса, значения: job, worker, forkworker
-	IsRun bool   // =true - процесс запущен
+	ID    string        // Идентификатор процесса
+	Type  jobTypes.Type // Тип процесса, значения: task, worker, forkworker
+	IsRun bool          // =true - процесс запущен
 }
-
-// Type Тип процесса
-type Type string
-
-// String Convert type to string
-func (tpe Type) String() string { return string(tpe) }
 
 // ID Идентификатор процесса
 type ID struct {

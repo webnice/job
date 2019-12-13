@@ -7,24 +7,26 @@ import (
 	"context"
 	"sync"
 
-	"gopkg.in/webnice/job.v1/event"
-	"gopkg.in/webnice/job.v1/pool"
+	jobEvent "gopkg.in/webnice/job.v1/event"
+	jobPool "gopkg.in/webnice/job.v1/pool"
+	jobTypes "gopkg.in/webnice/job.v1/types"
 )
 
 // Reset Сброс библиотеки, подготовка к повторному использованию
 // Если были запущены процессы, то контроль над ними будет потерян
-func (jbo *impl) Reset() {
+func (jbo *impl) Reset() Interface {
 	// Контекст
 	if jbo.CancelFunc != nil {
 		jbo.CancelFunc()
 	}
 	jbo.Ctx, jbo.CancelFunc = context.WithCancel(context.Background())
 	// Пул структур
-	jbo.Pool = pool.New()
+	jbo.Pool = jobPool.New()
 	// Список процессов
-	if jbo.ProcessList == nil {
+	switch jbo.ProcessList {
+	case nil:
 		jbo.ProcessList = list.New()
-	} else {
+	default:
 		jbo.ProcessList.Init()
 	}
 	// Группа ожидания
@@ -36,6 +38,8 @@ func (jbo *impl) Reset() {
 	if jbo.Event != nil {
 		close(jbo.Event)
 	}
-	jbo.Event = make(chan *event.Event, _EventBufLength)
+	jbo.Event = make(chan *jobEvent.Event, jobTypes.EventBufLength)
 	jbo.Exit.Store(false)
+
+	return jbo
 }
