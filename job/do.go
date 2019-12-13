@@ -122,8 +122,10 @@ func (jbo *impl) Start(id string) (err error) {
 // StartByType Запуск процессов определённого типа в соответствии с очерёдностью запуска
 func (jbo *impl) StartByType(tp jobTypes.Type) (err error) {
 	var (
-		prc *Process
-		n   int
+		prc   *Process
+		st    *jobTypes.State
+		isRun bool
+		n     int
 	)
 
 	for n = range jbo.StartPriority {
@@ -135,6 +137,21 @@ func (jbo *impl) StartByType(tp jobTypes.Type) (err error) {
 		if err != nil || prc != nil && prc.Type != tp {
 			continue
 		}
+		if st, err = prc.State(); err != nil {
+			return
+		}
+		// Пропускаем всех с выключенным автостартом
+		if !st.Conf.Autostart {
+			continue
+		}
+		// Пропускаем уже запущенные
+		if isRun, err = prc.IsRun(); err != nil {
+			return
+		}
+		if isRun {
+			continue
+		}
+		// Запуск процесса
 		switch wrk := prc.P.(type) {
 		case *jobTypes.Task:
 			err = jbo.runTask(wrk)
