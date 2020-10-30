@@ -6,18 +6,17 @@
 [![Build Status](https://travis-ci.org/webnice/job.svg?branch=v1)](https://travis-ci.org/webnice/job)
 [![CircleCI](https://circleci.com/gh/webnice/job/tree/v1.svg?style=svg)](https://circleci.com/gh/webnice/job/tree/v1)
 
+
 #### Description
 
 
-#### Requirements
-
-	Golang 1.8 or later
 
 #### Dependencies
 
 	none
 
 
-#### Install
-
-	go get gopkg.in/webnice/job.v1/job
+#### Installation
+```bash
+go get -u github.com/webnice/job/v2
+```
