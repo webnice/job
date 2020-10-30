@@ -1,13 +1,13 @@
-package job // import "gopkg.in/webnice/job.v1/job"
+package job
 
-import "gopkg.in/webnice/debug.v1"
-import "gopkg.in/webnice/log.v2"
 import (
 	"container/list"
 	"time"
 
-	jobEvent "gopkg.in/webnice/job.v1/event"
-	jobTypes "gopkg.in/webnice/job.v1/types"
+	jobEvent "github.com/webnice/job/event"
+	jobTypes "github.com/webnice/job/types"
+
+	"github.com/webnice/log/v2"
 )
 
 // Горутина обработки событий
@@ -37,7 +37,7 @@ func (jbo *impl) EventProcessor() {
 			jbo.eventFatality(evt)
 		// Любое не известное событие
 		default:
-			log.Criticalf("not implemented event:\n%s", debug.DumperString(evt))
+			log.Criticalf("not implemented event")
 		}
 	}
 }

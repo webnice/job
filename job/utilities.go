@@ -1,7 +1,5 @@
-package job // import "gopkg.in/webnice/job.v1/job"
+package job
 
-//import "gopkg.in/webnice/debug.v1"
-//import "gopkg.in/webnice/log.v2"
 import (
 	"fmt"
 	runtimeDebug "runtime/debug"

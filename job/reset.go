@@ -1,15 +1,13 @@
-package job // import "gopkg.in/webnice/job.v1/job"
+package job
 
-//import "gopkg.in/webnice/debug.v1"
-//import "gopkg.in/webnice/log.v2"
 import (
 	"container/list"
 	"context"
 	"sync"
 
-	jobEvent "gopkg.in/webnice/job.v1/event"
-	jobPool "gopkg.in/webnice/job.v1/pool"
-	jobTypes "gopkg.in/webnice/job.v1/types"
+	jobEvent "github.com/webnice/job/event"
+	jobPool "github.com/webnice/job/pool"
+	jobTypes "github.com/webnice/job/types"
 )
 
 // Reset Сброс библиотеки, подготовка к повторному использованию

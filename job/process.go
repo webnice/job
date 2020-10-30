@@ -1,10 +1,6 @@
-package job // import "gopkg.in/webnice/job.v1/job"
+package job
 
-//import "gopkg.in/webnice/debug.v1"
-//import "gopkg.in/webnice/log.v2"
-import (
-	jobTypes "gopkg.in/webnice/job.v1/types"
-)
+import jobTypes "github.com/webnice/job/types"
 
 // IsRun Для процессов в состоянии запущен возвращается истина
 func (prc *Process) IsRun() (ret bool, err error) {
