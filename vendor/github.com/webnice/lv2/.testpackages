@@ -1,12 +1,12 @@
-# github.com/webnice/lv2 v0.0.0-20201212082251-996f95a7bf70
-## explicit
 github.com/webnice/lv2
 github.com/webnice/lv2/formater
 github.com/webnice/lv2/gelf
 github.com/webnice/lv2/level
 github.com/webnice/lv2/message
 github.com/webnice/lv2/middleware
+github.com/webnice/lv2/middleware/fswformatjson
 github.com/webnice/lv2/middleware/fswformattext
+github.com/webnice/lv2/middleware/lfilter
 github.com/webnice/lv2/receiver
 github.com/webnice/lv2/receiver/fsfile
 github.com/webnice/lv2/receiver/fsfilerotation
