@@ -7,7 +7,7 @@ import (
 	jobEvent "github.com/webnice/job/event"
 	jobTypes "github.com/webnice/job/types"
 
-	"github.com/webnice/log/v2"
+	log "github.com/webnice/lv2"
 )
 
 // Горутина обработки событий
