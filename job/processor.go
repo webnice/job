@@ -1,26 +1,25 @@
-package job // import "gopkg.in/webnice/job.v1/job"
+package job
 
-import "gopkg.in/webnice/debug.v1"
-import "gopkg.in/webnice/log.v2"
 import (
 	"container/list"
+	"log"
 	"time"
 
-	jobEvent "gopkg.in/webnice/job.v1/event"
-	jobTypes "gopkg.in/webnice/job.v1/types"
+	jobEvent "github.com/webnice/job/event"
+	jobTypes "github.com/webnice/job/types"
 )
 
-// Горутина обработки событий
+// EventProcessor Горутина обработки событий.
 func (jbo *impl) EventProcessor() {
 	var evt *jobEvent.Event
 
 	for {
-		// nil приходит при пересоздании канала по команде Reset()
+		// nil приходит при пересоздании канала по команде Reset().
 		if evt = <-jbo.Event; evt == nil {
 			continue
 		}
 		switch evt.Act {
-		// Отправка всем запущенным процессам сигнала Cancel()
+		// Отправка всем запущенным процессам сигнала Cancel().
 		case jobEvent.ECancel:
 			jbo.eventCancel()
 		// События ошибок
@@ -29,20 +28,20 @@ func (jbo *impl) EventProcessor() {
 		// Изменение состояния процесса
 		case jobEvent.EProcessStarted:
 			jbo.eventChangeState(evt, true)
-		case jobEvent.EProcessStoped:
+		case jobEvent.EProcessStopped:
 			jbo.eventChangeState(evt, false)
 		case jobEvent.ERestartProcess:
 			jbo.eventRestartProcess(evt)
 		case jobEvent.EProcessFatality:
 			jbo.eventFatality(evt)
-		// Любое не известное событие
+		// Любое не известное событие.
 		default:
-			log.Criticalf("not implemented event:\n%s", debug.DumperString(evt))
+			log.Printf("not implemented event: %q", string(evt.Act))
 		}
 	}
 }
 
-// Сигнал завершения всех запущенных процессов
+// Сигнал завершения всех запущенных процессов.
 func (jbo *impl) eventCancel() {
 	var (
 		elm *list.Element
@@ -72,7 +71,7 @@ func (jbo *impl) eventCancel() {
 	}
 }
 
-// Выполнение внешней функции принимающей события ошибок
+// Выполнение внешней функции принимающей события ошибок.
 func (jbo *impl) eventError(evt *jobEvent.Event) {
 	defer func() { _ = recover() }()
 
@@ -82,7 +81,7 @@ func (jbo *impl) eventError(evt *jobEvent.Event) {
 	jbo.ErrorFunc(evt.SourceID, evt.Err)
 }
 
-// Выполнение внешней функции принимающей событие изменения статуса процесса
+// Выполнение внешней функции принимающей событие изменения статуса процесса.
 func (jbo *impl) eventChangeState(evt *jobEvent.Event, running bool) {
 	defer func() { _ = recover() }()
 
@@ -92,7 +91,7 @@ func (jbo *impl) eventChangeState(evt *jobEvent.Event, running bool) {
 	jbo.ChangeStateFunc(evt.SourceID, running)
 }
 
-// Событие перезапуска процесса завершившегося без ошибки
+// Событие перезапуска процесса завершившегося без ошибки.
 func (jbo *impl) eventRestartProcess(evt *jobEvent.Event) {
 	if jbo.Exit.Load().(bool) {
 		return
@@ -104,19 +103,19 @@ func (jbo *impl) eventRestartProcess(evt *jobEvent.Event) {
 			if wrk.ID != evt.TargetID {
 				return
 			}
-			// Перезапуск процесса с таймаутом
+			// Перезапуск процесса с таймаутом.
 			go jbo.doTaskWithTimeout(wrk, wrk.State.Conf.RestartTimeout)
 		case *jobTypes.Worker:
 			if wrk.ID != evt.TargetID {
 				return
 			}
-			// Перезапуск процесса с таймаутом
+			// Перезапуск процесса с таймаутом.
 			go jbo.doTaskWithTimeout(wrk, wrk.State.Conf.RestartTimeout)
 		case *jobTypes.ForkWorker:
 			if wrk.ID != evt.TargetID {
 				return
 			}
-			// Перезапуск процесса с таймаутом
+			// Перезапуск процесса с таймаутом.
 			go jbo.doTaskWithTimeout(wrk, wrk.State.Conf.RestartTimeout)
 		}
 
@@ -124,7 +123,7 @@ func (jbo *impl) eventRestartProcess(evt *jobEvent.Event) {
 	})
 }
 
-// Перезапуск процесса с таймаутом
+// Перезапуск процесса с таймаутом.
 func (jbo *impl) doTaskWithTimeout(proc interface{}, tm time.Duration) {
 	var (
 		err error
@@ -156,7 +155,7 @@ func (jbo *impl) doTaskWithTimeout(proc interface{}, tm time.Duration) {
 	}
 }
 
-// Фатальная ошибка, остановка и выход
+// Фатальная ошибка, остановка и выход.
 func (jbo *impl) eventFatality(evt *jobEvent.Event) {
 	jbo.eventCancel()
 }

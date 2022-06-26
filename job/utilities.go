@@ -1,26 +1,24 @@
-package job // import "gopkg.in/webnice/job.v1/job"
+package job
 
-//import "gopkg.in/webnice/debug.v1"
-//import "gopkg.in/webnice/log.v2"
 import (
 	"fmt"
 	runtimeDebug "runtime/debug"
 	"sync"
 )
 
-// Безопасный метод отправки пустой структуры (сигнала) в канал
+// Безопасный метод отправки пустой структуры (сигнала) в канал.
 func safeChannelSend(ch chan<- struct{}) {
 	defer func() { _ = recover() }()
 	ch <- struct{}{}
 }
 
-// Безопасно делает один вызов Done() для sync.WaitGroup
+// Безопасно делает один вызов Done() для sync.WaitGroup.
 func safeWgDone(wg *sync.WaitGroup) {
 	defer func() { _ = recover() }()
 	wg.Done()
 }
 
-// Безопасно обнуляет до конца sync.WaitGroup
+// Безопасно обнуляет до конца sync.WaitGroup.
 func safeWgDoneForAll(wg *sync.WaitGroup) {
 	defer func() { _ = recover() }()
 	for {
@@ -28,13 +26,13 @@ func safeWgDoneForAll(wg *sync.WaitGroup) {
 	}
 }
 
-// Безопасно выполняет Wait() для sync.WaitGroup
+// Безопасно выполняет Wait() для sync.WaitGroup.
 func safeWgWait(wg *sync.WaitGroup) {
 	defer func() { _ = recover() }()
 	wg.Wait()
 }
 
-// Безопасный запуск функции
+// Безопасный запуск функции.
 func safeCall(fn func() error) (err error) {
 	var ok bool
 

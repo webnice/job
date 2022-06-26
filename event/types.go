@@ -1,23 +1,19 @@
-package event // import "gopkg.in/webnice/job.v1/event"
+package event
 
-//import "gopkg.in/webnice/debug.v1"
-//import "gopkg.in/webnice/log.v2"
-import ()
-
-// Event Событие
+// Event Событие.
 type Event struct {
-	// SourceID Идентификатор процесса создавшего событие
+	// SourceID Идентификатор процесса создавшего событие.
 	SourceID string
 
-	// TargetID Идентификатор процесса назначения события, если пусто - все процессы
+	// TargetID Идентификатор процесса назначения события, если пусто - все процессы.
 	TargetID string
 
-	// Act Действие которое необходимо выполнить, либо произошедная смена состояния
+	// Act Действие которое необходимо выполнить, либо произошедшая смена состояния.
 	Act Operation
 
-	// Err Событие ошибки
+	// Err Событие ошибки.
 	Err error
 }
 
-// Operation type
+// Operation type.
 type Operation string

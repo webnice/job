@@ -1,11 +1,9 @@
-package job // import "gopkg.in/webnice/job.v1/job"
+package job
 
-//import "gopkg.in/webnice/debug.v1"
-//import "gopkg.in/webnice/log.v2"
 import (
 	"testing"
 
-	jobTypes "gopkg.in/webnice/job.v1/types"
+	jobTypes "github.com/webnice/job/types"
 )
 
 func TestType(t *testing.T) {

@@ -1,24 +1,22 @@
-package types // import "gopkg.in/webnice/job.v1/types"
+package types
 
-//import "gopkg.in/webnice/debug.v1"
-//import log "gopkg.in/webnice/log.v2"
 import (
 	"context"
 	"runtime"
 )
 
-// TaskInterface Интерфейс простой управляемой задачи
+// TaskInterface Интерфейс простой управляемой задачи.
 type TaskInterface interface {
 	BaseInterface
 }
 
-// Task Структура управляющих данных простой управляемой задачи
+// Task Структура управляющих данных простой управляемой задачи.
 type Task struct {
-	Pith               // Общие для всех типов процессов переменные
-	Self TaskInterface // Self
+	Pith               // Общие для всех типов процессов переменные.
+	Self TaskInterface // Self.
 }
 
-// NewTask Конструктор объектов Task
+// NewTask Конструктор объектов Task.
 func NewTask() interface{} {
 	var jbo = new(Task)
 	jbo.Ctx, jbo.Cancel = context.WithCancel(context.Background())
@@ -27,7 +25,7 @@ func NewTask() interface{} {
 	return jbo
 }
 
-// DestroyTask Деструктор объектов Task
+// DestroyTask Деструктор объектов Task.
 func DestroyTask(jbo *Task) {
 	//log.Debug("Destroy task object")
 }

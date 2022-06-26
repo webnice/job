@@ -1,12 +1,8 @@
-package job // import "gopkg.in/webnice/job.v1/job"
+package job
 
-//import "gopkg.in/webnice/debug.v1"
-//import "gopkg.in/webnice/log.v2"
-import (
-	jobTypes "gopkg.in/webnice/job.v1/types"
-)
+import jobTypes "github.com/webnice/job/types"
 
-// IsRun Для процессов в состоянии запущен возвращается истина
+// IsRun Для процессов в состоянии запущен возвращается истина.
 func (prc *Process) IsRun() (ret bool, err error) {
 	switch wrk := prc.P.(type) {
 	case *jobTypes.Task:
@@ -22,7 +18,7 @@ func (prc *Process) IsRun() (ret bool, err error) {
 	return
 }
 
-// ID Возвращается идентификатор процесса
+// ID Возвращается идентификатор процесса.
 func (prc *Process) ID() (ret string, err error) {
 	switch wrk := prc.P.(type) {
 	case *jobTypes.Task:
@@ -38,7 +34,7 @@ func (prc *Process) ID() (ret string, err error) {
 	return
 }
 
-// State Возвращается указатель на состояние процесса
+// State Возвращается указатель на состояние процесса.
 func (prc *Process) State() (ret *jobTypes.State, err error) {
 	switch wrk := prc.P.(type) {
 	case *jobTypes.Task:
@@ -54,7 +50,7 @@ func (prc *Process) State() (ret *jobTypes.State, err error) {
 	return
 }
 
-// InfoRequest Запрос конфигурации процесса
+// InfoRequest Запрос конфигурации процесса.
 func (prc *Process) InfoRequest() (ret *jobTypes.Configuration, err error) {
 	switch wrk := prc.P.(type) {
 	case *jobTypes.Task:
@@ -70,7 +66,7 @@ func (prc *Process) InfoRequest() (ret *jobTypes.Configuration, err error) {
 	return
 }
 
-// Configuration Установка конфигурации процессу
+// Configuration Установка конфигурации процессу.
 func (prc *Process) Configuration(cfg *jobTypes.Configuration) (err error) {
 	switch wrk := prc.P.(type) {
 	case *jobTypes.Task:

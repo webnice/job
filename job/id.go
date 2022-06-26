@@ -1,7 +1,5 @@
-package job // import "gopkg.in/webnice/job.v1/job"
+package job
 
-//import "gopkg.in/webnice/debug.v1"
-//import "gopkg.in/webnice/log.v2"
 import (
 	"fmt"
 	"os"
@@ -10,7 +8,7 @@ import (
 	"strings"
 )
 
-// Parse Разбирается переданная строка в объект ID
+// Parse Разбирается переданная строка в объект ID.
 func (ido *ID) Parse(src string) (ret *ID, err error) {
 	var tmp []string
 
@@ -31,8 +29,8 @@ func (ido *ID) Parse(src string) (ret *ID, err error) {
 func (ido *ID) String() string { return fmt.Sprintf("%s:%d:%d", ido.name, ido.serialNumber, ido.pid) }
 
 // EqualRoot Равны по корню.
-// Сравниваются: пакет, имя структуры
-// Не учитываются: PID, порядковый номер
+// Сравниваются: пакет, имя структуры.
+// Не учитываются: PID, порядковый номер.
 func (ido *ID) EqualRoot(id string) bool {
 	if src, err := ido.Parse(id); err == nil &&
 		strings.EqualFold(ido.name, src.name) {
@@ -42,8 +40,8 @@ func (ido *ID) EqualRoot(id string) bool {
 }
 
 // EqualParent Равны в пределах приложения.
-// Сравниваются: пакет, имя структуры, PID
-// Не учитывается: порядковый номер
+// Сравниваются: пакет, имя структуры, PID.
+// Не учитывается: порядковый номер.
 func (ido *ID) EqualParent(id string) bool {
 	if src, err := ido.Parse(id); err == nil &&
 		strings.EqualFold(ido.name, src.name) &&
@@ -53,9 +51,9 @@ func (ido *ID) EqualParent(id string) bool {
 	return false
 }
 
-// Equal Равны в пределах пакета
-// Сравниваются: пакет, имя структуры, порядковый номер
-// Не учитывается: PID
+// Equal Равны в пределах пакета.
+// Сравниваются: пакет, имя структуры, порядковый номер.
+// Не учитывается: PID.
 func (ido *ID) Equal(id string) bool {
 	if src, err := ido.Parse(id); err == nil &&
 		strings.EqualFold(ido.name, src.name) &&
@@ -66,7 +64,7 @@ func (ido *ID) Equal(id string) bool {
 }
 
 // EqualFold Полное сравнение.
-// Сравниваются: пакет, имя структуры, порядковый номер, PID
+// Сравниваются: пакет, имя структуры, порядковый номер, PID.
 func (ido *ID) EqualFold(id string) bool { return strings.EqualFold(ido.String(), id) }
 
 // Получение уникального имени пакета + имя структуры

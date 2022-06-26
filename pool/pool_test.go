@@ -1,11 +1,9 @@
-package pool // import "gopkg.in/webnice/job.v1/pool"
+package pool
 
-//import "gopkg.in/webnice/debug.v1"
-//import "gopkg.in/webnice/log.v2"
 import (
 	"testing"
 
-	"gopkg.in/webnice/job.v1/types"
+	"github.com/webnice/job/types"
 )
 
 func TestNew(t *testing.T) {
