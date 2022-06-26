@@ -4,27 +4,27 @@ import (
 	"context"
 	"time"
 
-	jobEvent "github.com/webnice/job/event"
-	jobTypes "github.com/webnice/job/types"
+	jobEvent "github.com/webnice/job/v2/event"
+	jobTypes "github.com/webnice/job/v2/types"
 )
 
-// Запуск процесса forkworker
-func (jbo *impl) runForkWorker(prc *jobTypes.ForkWorker) (err error) {
+// Запуск процесса forkworker.
+func (jbo *impl) runForkWorker(_ *jobTypes.ForkWorker) (err error) {
 
-	// TODO Скопировать запуск из wdaccessatomic
+	// TODO Скопировать запуск из 'wdaccessatomic'.
 
 	//debug.Dumper(prc)
 
 	return
 }
 
-// Запуск процесса worker
+// Запуск процесса worker.
 func (jbo *impl) runWorker(prc *jobTypes.Worker) (err error) {
 	if prc.State.IsRun.Load().(bool) {
 		err = jbo.Errors().ProcessAlreadyRunning()
 		return
 	}
-	// Prepare()
+	// Prepare().
 	if err = safeCall(prc.Self.Prepare); err != nil {
 		jbo.Event <- &jobEvent.Event{Act: jobEvent.EOnError, SourceID: prc.ID, Err: err}
 		return
@@ -35,7 +35,7 @@ func (jbo *impl) runWorker(prc *jobTypes.Worker) (err error) {
 		defer func() {
 			prc.State.IsRun.Store(false)
 			safeWgDone(jbo.Wg)
-			jbo.Event <- &jobEvent.Event{Act: jobEvent.EProcessStoped, SourceID: prc.ID}
+			jbo.Event <- &jobEvent.Event{Act: jobEvent.EProcessStopped, SourceID: prc.ID}
 		}()
 		jbo.runProc(prc.Ctx, prc.Self, &prc.Pith)
 	}(prc)
@@ -43,7 +43,7 @@ func (jbo *impl) runWorker(prc *jobTypes.Worker) (err error) {
 	return
 }
 
-// Запуск процесса task
+// Запуск процесса task.
 func (jbo *impl) runTask(prc *jobTypes.Task) (err error) {
 	if prc.State.IsRun.Load().(bool) {
 		err = jbo.Errors().ProcessAlreadyRunning()
@@ -55,7 +55,7 @@ func (jbo *impl) runTask(prc *jobTypes.Task) (err error) {
 		defer func() {
 			prc.State.IsRun.Store(false)
 			safeWgDone(jbo.Wg)
-			jbo.Event <- &jobEvent.Event{Act: jobEvent.EProcessStoped, SourceID: prc.ID}
+			jbo.Event <- &jobEvent.Event{Act: jobEvent.EProcessStopped, SourceID: prc.ID}
 		}()
 		jbo.runProc(prc.Ctx, prc.Self, &prc.Pith)
 	}(prc)
@@ -63,7 +63,7 @@ func (jbo *impl) runTask(prc *jobTypes.Task) (err error) {
 	return
 }
 
-// Запуск основного процесса с прерыванием
+// Запуск основного процесса с прерыванием.
 func (jbo *impl) runProc(ctx context.Context, pri jobTypes.BaseInterface, pith *jobTypes.Pith) {
 	var pex = make(chan struct{})
 
@@ -74,31 +74,31 @@ func (jbo *impl) runProc(ctx context.Context, pri jobTypes.BaseInterface, pith *
 		jbo.Event <- &jobEvent.Event{Act: jobEvent.EProcessStarted, SourceID: pith.ID}
 		err = safeCall(pri.Worker)
 		if err != nil {
-			// Отправка события ошибки
+			// Отправка события ошибки.
 			jbo.Event <- &jobEvent.Event{Act: jobEvent.EOnError, SourceID: pith.ID, Err: err}
 		}
 		if err != nil && pith.State.Conf.Fatality {
-			// Отправка события фатального завершения всех процессов и приложения
+			// Отправка события фатального завершения всех процессов и приложения.
 			jbo.Event <- &jobEvent.Event{Act: jobEvent.EProcessFatality, SourceID: pith.ID, Err: err}
 		}
 		if err == nil && pith.State.Conf.Restart {
-			// Перезапуск остановившегося без ошибки процесса
+			// Перезапуск остановившегося без ошибки процесса.
 			jbo.Event <- &jobEvent.Event{Act: jobEvent.ERestartProcess, SourceID: pith.ID, TargetID: pith.ID}
 		}
 	}()
 	select {
-	// Завершение выполнения процесса
+	// Завершение выполнения процесса.
 	case <-pex:
 		return
-	// Выполнение функции Cancel()
+	// Выполнение функции Cancel().
 	case <-ctx.Done():
-		// Прерывание выполнения
+		// Прерывание выполнения.
 		if err := safeCall(pri.Cancel); err != nil {
 			jbo.Event <- &jobEvent.Event{Act: jobEvent.ECancelError, SourceID: pith.ID, Err: err}
 		}
 		if pith.State.Conf.CancelTimeout > 0 {
-			// Таймаут ожидания завершения процесса после выполнения функции Cancel()
-			// После этого ожидания, отправляем в канал сигнал, как буд-то процесс завершился
+			// Таймаут ожидания завершения процесса после выполнения функции Cancel().
+			// После этого ожидания, отправляем в канал сигнал, как буд-то процесс завершился.
 			go func() {
 				if pith.State.Conf.CancelTimeout > 0 {
 					tmr := time.NewTimer(pith.State.Conf.CancelTimeout)
@@ -109,6 +109,6 @@ func (jbo *impl) runProc(ctx context.Context, pri jobTypes.BaseInterface, pith *
 			}()
 		}
 	}
-	// Ожидание завершения процесса
+	// Ожидание завершения процесса.
 	<-pex
 }

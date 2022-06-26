@@ -3,7 +3,7 @@ package job
 import (
 	"testing"
 
-	jobTypes "github.com/webnice/job/types"
+	jobTypes "github.com/webnice/job/v2/types"
 )
 
 func TestType(t *testing.T) {

@@ -3,7 +3,7 @@ package pool
 import (
 	"testing"
 
-	"github.com/webnice/job/types"
+	"github.com/webnice/job/v2/types"
 )
 
 func TestNew(t *testing.T) {

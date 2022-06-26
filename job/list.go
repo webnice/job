@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// List Список зарегистрированных процессов
+// List Список зарегистрированных процессов.
 func (jbo *impl) List() (ret []*Info) {
 	ret = make([]*Info, 0, jbo.ProcessList.Len())
 	jbo.err = jbo.RegisteredProcessIterate(func(elm *list.Element, prc *Process) (e error) {
@@ -26,19 +26,19 @@ func (jbo *impl) List() (ret []*Info) {
 	return
 }
 
-// Сравнение идентификатора с искомым идентификатором и расширением
+// Сравнение идентификатора с искомым идентификатором и расширением.
 // Процессы именуются по имени пакета и имени типа объекта в пакете,
 // если существует не один объект процесса, то все остальные дополняются числом через дефис:
-// - application/workers/web/impl
-// - application/workers/web/impl-1
-// - application/workers/web/impl-2
+// - application/workers/web/impl.
+// - application/workers/web/impl-1.
+// - application/workers/web/impl-2.
 // При сравнении указывается в id сравниваемый и в search искомый идентификатор.
-// В ext указывается искомое значение дополняемого числа
+// В ext указывается искомое значение дополняемого числа.
 //
-// Функция вернёт
-// - full=true                  - если id полностью совпадает с search
-// - full=false и partial=true  - если id совпадает с search, но дополнение ext не совпадает с указанным в id
-// - full=false и partial=false - при полном не совпадении
+// Функция вернёт:
+// - full=true                  - если id полностью совпадает с search.
+// - full=false и partial=true  - если id совпадает с search, но дополнение ext не совпадает с указанным в id.
+// - full=false и partial=false - при полном не совпадении.
 func (jbo *impl) compareID(id string, search string, ext uint64) (full bool, partial bool) {
 	var (
 		searchFull string
@@ -65,7 +65,7 @@ func (jbo *impl) compareID(id string, search string, ext uint64) (full bool, par
 	return
 }
 
-// Find Поиск процесса по идентификатору
+// Find Поиск процесса по идентификатору.
 func (jbo *impl) Find(id string) (ret *Info, err error) {
 	var (
 		all   []*Info

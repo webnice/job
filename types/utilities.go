@@ -1,6 +1,6 @@
 package types
 
-// DefaultConfiguration Копирует конфигурацию по умолчанию и возвращает ссылку на новую копию
+// DefaultConfiguration Копирует конфигурацию по умолчанию и возвращает ссылку на новую копию.
 func DefaultConfiguration() (ret *Configuration) {
 	ret = &Configuration{
 		Autostart:      defaultConfiguration.Autostart,

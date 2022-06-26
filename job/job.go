@@ -5,35 +5,35 @@ import (
 	"context"
 	"time"
 
-	jobTypes "github.com/webnice/job/types"
+	jobTypes "github.com/webnice/job/v2/types"
 )
 
-// Constructor of singleton
+// Constructor of singleton.
 func init() {
 	singleton = new(impl)
 	singleton.Reset()
 	go singleton.EventProcessor()
 }
 
-// Error Последняя внутренняя ошибка
+// Err Последняя внутренняя ошибка.
 func (jbo *impl) Err() error { return jbo.err }
 
-// Errors Ошибки известного состояни, которые могут вернуть функции пакета
+// Errors Ошибки известного состояния, которые могут вернуть функции пакета.
 func (jbo *impl) Errors() *Error { return Errors() }
 
-// RegisterErrorFunc Регистрация функции получения ошибок о работе управляемых процессов
+// RegisterErrorFunc Регистрация функции получения ошибок о работе управляемых процессов.
 func (jbo *impl) RegisterErrorFunc(fn OnErrorFunc) Interface { jbo.ErrorFunc = fn; return jbo }
 
-// RegisterChangeStateFunc Регистрация функции получения изменения состояния процессов
+// RegisterChangeStateFunc Регистрация функции получения изменения состояния процессов.
 func (jbo *impl) RegisterChangeStateFunc(fn OnChangeStateFunc) Interface {
 	jbo.ChangeStateFunc = fn
 	return jbo
 }
 
-// UnregisterErrorFunc Удаление ранее зарегистрированной функции получения ошибок
+// UnregisterErrorFunc Удаление ранее зарегистрированной функции получения ошибок.
 func (jbo *impl) UnregisterErrorFunc() Interface { jbo.ErrorFunc = nil; return jbo }
 
-// Wait Ожидание завершения всех работающих процессов
+// Wait Ожидание завершения всех работающих процессов.
 func (jbo *impl) Wait() Interface {
 	var wgc = make(chan struct{})
 
@@ -54,7 +54,7 @@ func (jbo *impl) Wait() Interface {
 	return jbo
 }
 
-// WaitWithTimeout Ожидание завершения всех работающих процессов, но не более чем время указанное в timeout
+// WaitWithTimeout Ожидание завершения всех работающих процессов, но не более чем время указанное в timeout.
 func (jbo *impl) WaitWithTimeout(timeout time.Duration) Interface {
 	var wgc = make(chan struct{})
 
@@ -73,7 +73,7 @@ func (jbo *impl) WaitWithTimeout(timeout time.Duration) Interface {
 	return jbo
 }
 
-// RegisteredProcessIterate Итерация по всем зарегистрированным процессам
+// RegisteredProcessIterate Итерация по всем зарегистрированным процессам.
 func (jbo *impl) RegisteredProcessIterate(fn func(*list.Element, *Process) error) (err error) {
 	var (
 		elm *list.Element
@@ -94,7 +94,7 @@ func (jbo *impl) RegisteredProcessIterate(fn func(*list.Element, *Process) error
 	return
 }
 
-// RegisteredProcessFindByID Поиск зарегистрированного процесса по ID
+// RegisteredProcessFindByID Поиск зарегистрированного процесса по ID.
 func (jbo *impl) RegisteredProcessFindByID(id string) (item *list.Element, ret *Process, err error) {
 	var (
 		found bool
@@ -124,7 +124,7 @@ func (jbo *impl) RegisteredProcessFindByID(id string) (item *list.Element, ret *
 	return
 }
 
-// ProcessObjectReturnToPool Возвращение объекта процесса в пул
+// ProcessObjectReturnToPool Возвращение объекта процесса в пул.
 func (jbo *impl) ProcessObjectReturnToPool(prc *Process) (err error) {
 	switch wrk := prc.P.(type) {
 	case *jobTypes.Task:

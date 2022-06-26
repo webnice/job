@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strconv"
 
-	jobTypes "github.com/webnice/job/types"
+	jobTypes "github.com/webnice/job/v2/types"
 )
 
-// CreateTaskID Создание идентификатора задачи на базе объекта воркера
+// CreateTaskID Создание идентификатора задачи на базе объекта воркера.
 func (jbo *impl) CreateTaskID(obj Task) (ret string) {
 	var (
 		err   error
@@ -22,7 +22,7 @@ func (jbo *impl) CreateTaskID(obj Task) (ret string) {
 	jbo.TaskIDSync.Lock()
 	defer jbo.TaskIDSync.Unlock()
 	ret = getStructName(obj)
-	// Поиск всех совпадающих ID процессов
+	// Поиск всех совпадающих ID процессов.
 	if err = jbo.RegisteredProcessIterate(
 		func(elm *list.Element, prc *Process) (e error) {
 			var (
@@ -56,7 +56,7 @@ func (jbo *impl) CreateTaskID(obj Task) (ret string) {
 	return
 }
 
-// RegisterTask Регистрация простой управляемой задачи
+// RegisterTask Регистрация простой управляемой задачи.
 func (jbo *impl) RegisterTask(obj Task) (ret string) {
 	var jb = jbo.Pool.TaskGet()
 	jb.Self = obj
@@ -66,7 +66,7 @@ func (jbo *impl) RegisterTask(obj Task) (ret string) {
 	return jb.ID
 }
 
-// RegisterWorker Регистрация управляемого работника
+// RegisterWorker Регистрация управляемого работника.
 func (jbo *impl) RegisterWorker(obj Worker) (ret string) {
 	var wk = jbo.Pool.WorkerGet()
 	wk.Self = obj
@@ -76,7 +76,7 @@ func (jbo *impl) RegisterWorker(obj Worker) (ret string) {
 	return wk.ID
 }
 
-// RegisterForkWorker Регистрация управляемого работника
+// RegisterForkWorker Регистрация управляемого работника.
 func (jbo *impl) RegisterForkWorker(obj ForkWorker) (ret string) {
 	var fwk = jbo.Pool.ForkWorkerGet()
 	fwk.Self = obj
@@ -86,8 +86,8 @@ func (jbo *impl) RegisterForkWorker(obj ForkWorker) (ret string) {
 	return fwk.ID
 }
 
-// Unregister Функция удаляет из реестра процессов процесс с указанным ID
-// Для того чтобы быть удалённым, процесс должен быть в состоянии остановлен
+// Unregister Функция удаляет из реестра процессов процесс с указанным ID.
+// Для того чтобы быть удалённым, процесс должен быть в состоянии остановлен.
 func (jbo *impl) Unregister(id string) (err error) {
 	var (
 		item  *list.Element
@@ -95,20 +95,20 @@ func (jbo *impl) Unregister(id string) (err error) {
 		isRun bool
 	)
 
-	// Поиск зарегистрированного процесса по ID
+	// Поиск зарегистрированного процесса по ID.
 	if item, prc, err = jbo.RegisteredProcessFindByID(id); err != nil {
 		return
 	}
-	// Запущенный процесс нельзя разрегистрировать
+	// Запущенный процесс нельзя разрегистрировать.
 	if isRun, err = prc.IsRun(); err != nil || isRun {
 		if isRun {
 			err = jbo.Errors().UnregisterProcessIsRunning()
 		}
 		return
 	}
-	// Удаление процесса из списка процессов
+	// Удаление процесса из списка процессов.
 	_ = jbo.ProcessList.Remove(item)
-	// Возврат объекта в пул
+	// Возврат объекта в пул.
 	if err = jbo.ProcessObjectReturnToPool(prc); err != nil {
 		return
 	}

@@ -5,13 +5,13 @@ import (
 	"context"
 	"sync"
 
-	jobEvent "github.com/webnice/job/event"
-	jobPool "github.com/webnice/job/pool"
-	jobTypes "github.com/webnice/job/types"
+	jobEvent "github.com/webnice/job/v2/event"
+	jobPool "github.com/webnice/job/v2/pool"
+	jobTypes "github.com/webnice/job/v2/types"
 )
 
-// Reset Сброс библиотеки, подготовка к повторному использованию
-// Если были запущены процессы, то контроль над ними будет потерян
+// Reset Сброс библиотеки, подготовка к повторному использованию.
+// Если были запущены процессы, то контроль над ними будет потерян.
 func (jbo *impl) Reset() Interface {
 	// Контекст
 	if jbo.CancelFunc != nil {

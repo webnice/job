@@ -17,6 +17,7 @@ _dev
 /storage
 /tmp
 /rpmbuild
+/src
 
 # Architecture specific extensions/prefixes
 *.[568vq]
