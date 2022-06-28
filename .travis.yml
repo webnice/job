@@ -3,7 +3,6 @@ language: go
 install:
   - go get github.com/mattn/goveralls
   - go get github.com/webnice/debug.v1
-  - go get github.com/webnice/lv2
 
 script:
   - make test
