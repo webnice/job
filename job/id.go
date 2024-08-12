@@ -68,7 +68,7 @@ func (ido *ID) Equal(id string) bool {
 func (ido *ID) EqualFold(id string) bool { return strings.EqualFold(ido.String(), id) }
 
 // Получение уникального имени пакета + имя структуры.
-func getStructName(obj interface{}) string {
+func getStructName(obj any) string {
 	var (
 		rt                         reflect.Type
 		packageName, structureName string

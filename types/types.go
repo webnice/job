@@ -22,10 +22,10 @@ type BaseInterface interface {
 }
 
 // RequestFunc Функция получения данных из процесса.
-type RequestFunc func(interface{})
+type RequestFunc func(any)
 
 // ResponseFunc Функция передачи данных результата работы процесса.
-type ResponseFunc func(interface{})
+type ResponseFunc func(any)
 
 // Configuration Конфигурация процессов
 type Configuration struct {

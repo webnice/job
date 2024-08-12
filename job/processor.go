@@ -124,7 +124,7 @@ func (jbo *impl) eventRestartProcess(evt *jobEvent.Event) {
 }
 
 // Перезапуск процесса с таймаутом.
-func (jbo *impl) doTaskWithTimeout(proc interface{}, tm time.Duration) {
+func (jbo *impl) doTaskWithTimeout(proc any, tm time.Duration) {
 	var (
 		err error
 		tmr *time.Timer

@@ -101,7 +101,7 @@ type impl struct {
 
 // Process Ссылка на процесс.
 type Process struct {
-	P    interface{}   // Присваиваются: *types.Task, *types.Worker, *types.ForkWorker.
+	P    any           // Присваиваются: *types.Task, *types.Worker, *types.ForkWorker.
 	Type jobTypes.Type // Тип процесса, значения: task, worker, forkworker.
 }
 

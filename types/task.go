@@ -17,7 +17,7 @@ type Task struct {
 }
 
 // NewTask Конструктор объектов Task.
-func NewTask() interface{} {
+func NewTask() any {
 	var jbo = new(Task)
 	jbo.Ctx, jbo.Cancel = context.WithCancel(context.Background())
 	jbo.Self = nil

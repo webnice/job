@@ -25,7 +25,7 @@ type ForkWorker struct {
 }
 
 // NewForkWorker Конструктор объектов ForkWorker.
-func NewForkWorker() interface{} {
+func NewForkWorker() any {
 	var jbo = new(ForkWorker)
 	jbo.Ctx, jbo.Cancel = context.WithCancel(context.Background())
 	jbo.Self = nil

@@ -22,7 +22,7 @@ type Worker struct {
 }
 
 // NewWorker Конструктор объектов Worker.
-func NewWorker() interface{} {
+func NewWorker() any {
 	var jbo = new(Worker)
 	jbo.Ctx, jbo.Cancel = context.WithCancel(context.Background())
 	jbo.Self = nil
